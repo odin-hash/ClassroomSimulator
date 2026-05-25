@@ -63,6 +63,8 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const [isPending, setIsPending] = useState(false);
   const [pendingStudent, setPendingStudent] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [viewMode, setViewMode] = useState<'gallery' | 'whiteboard'>('gallery');
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Timer states
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes default in seconds
@@ -355,163 +357,242 @@ export const Classroom: React.FC<ClassroomProps> = ({
   };
 
   return (
-    <div className={`classroom-container ${isInputFocused ? 'classroom-dimmed' : ''}`}>
-      <div className="classroom-dimmed-layer" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1, minHeight: 0 }}>
-        {/* Top Header */}
-        <div className="classroom-header glass">
+    <div className={`classroom-container ${isInputFocused ? 'classroom-dimmed' : ''} ${isChatOpen ? 'chat-open' : ''}`}>
+      {/* Left Collapsing Navigation Rail */}
+      <div className="left-nav-rail">
+        <div className="nav-rail-logo">
+          <span>🏫</span>
+          <span className="nav-rail-label">Future Classroom</span>
+        </div>
+        
+        <button className="nav-rail-item active" title={t.classroomStatus} type="button">
+          <span>🖥️</span>
+          <span className="nav-rail-label">{t.classroomStatus}</span>
+        </button>
+
+        <button 
+          className="nav-rail-item" 
+          title={`${t.topic}: ${sessionDetails?.topic || ''}`}
+          type="button"
+        >
+          <span>📋</span>
+          <span className="nav-rail-label">{sessionDetails?.subject || 'Subject'}</span>
+        </button>
+
+        <div style={{ flex: 1 }} />
+
+        <button 
+          className="nav-rail-item" 
+          onClick={() => {
+            setTimerActive(false);
+            onExit();
+          }}
+          title={t.backBtn}
+          id="classroom-btn-exit"
+          type="button"
+        >
+          <span>🚪</span>
+          <span className="nav-rail-label">{t.backBtn}</span>
+        </button>
+
+        <button 
+          className="nav-rail-item" 
+          style={{ color: 'var(--color-danger)' }}
+          onClick={() => {
+            setTimerActive(false);
+            onEndSession(sessionId);
+          }}
+          title={t.endBtn}
+          id="classroom-btn-end"
+          type="button"
+        >
+          <span>🛑</span>
+          <span className="nav-rail-label">{t.endBtn}</span>
+        </button>
+      </div>
+
+      <div className="classroom-dimmed-layer" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, minHeight: 0, padding: '1.5rem 2.5rem 1.5rem 1.5rem' }}>
+        {/* Top Header Navbar */}
+        <div className="classroom-header glass" style={{ padding: '0.75rem 1.5rem', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-              {t.classroomStatus}: <span className="gradient-text">{sessionDetails?.subject}</span>
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              {sessionDetails?.subject}: <span className="gradient-text">{sessionDetails?.topic}</span>
             </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              {t.topic}: <strong>{sessionDetails?.topic}</strong> | {t.classLevel}: {sessionDetails?.class_level}
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              {t.classLevel}: {sessionDetails?.class_level}
             </p>
           </div>
+
+          {/* Segmented View Toggles */}
+          <div className="view-toggle-bar">
+            <button 
+              className={`view-toggle-btn ${viewMode === 'gallery' ? 'active' : ''}`}
+              onClick={() => setViewMode('gallery')}
+              type="button"
+            >
+              👥 Gallery
+            </button>
+            <button 
+              className={`view-toggle-btn ${viewMode === 'whiteboard' ? 'active' : ''}`}
+              onClick={() => setViewMode('whiteboard')}
+              type="button"
+            >
+              📝 Whiteboard
+            </button>
+          </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {/* Countdown Clock */}
             <div 
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '0.5rem', 
-                background: 'rgba(239, 68, 68, 0.1)', 
-                padding: '0.5rem 1rem', 
+                background: 'rgba(239, 68, 68, 0.08)', 
+                padding: '0.4rem 0.8rem', 
                 borderRadius: '8px',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.15)',
                 fontWeight: 700,
-                fontSize: '1rem',
+                fontSize: '0.9rem',
                 color: timeLeft < 60 ? 'var(--color-danger)' : 'var(--text-primary)'
               }}
             >
               ⏱️ {formatTime(timeLeft)}
             </div>
 
-            <button 
-              className="btn-secondary" 
-              onClick={() => {
-                setTimerActive(false);
-                onExit();
-              }}
-              id="classroom-btn-exit"
+            {/* Toggle Chat Drawer Button */}
+            <button
+              className={`btn-secondary ${isChatOpen ? 'active' : ''}`}
+              style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              type="button"
             >
-              {t.backBtn}
-            </button>
-
-            <button 
-              className="btn-primary" 
-              style={{ background: 'linear-gradient(135deg, var(--color-success) 0%, #059669 100%)' }}
-              onClick={() => {
-                setTimerActive(false);
-                onEndSession(sessionId);
-              }}
-              id="classroom-btn-end"
-            >
-              {t.endBtn}
+              💬 Transcript
             </button>
           </div>
         </div>
 
-        {/* Main Grid: Desks vs Chat Transcript */}
-        <div className="classroom-grid-layout">
-          
-          {/* Left Side: Classroom seats & Events banner */}
+        {/* Main Grid View */}
+        <div className="classroom-grid-layout" style={{ gridTemplateColumns: '1fr' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
-            
             {/* Active Event Banner */}
             <EventPopup event={activeEvent} />
 
-            {/* Virtual Blackboard Illustration Board */}
-            <Blackboard 
-              onShare={(desc) => handleSendTurn(`[Illustrated ${desc} on Blackboard]`, undefined, 'blackboard_share')}
-              subject={sessionDetails?.subject || ''}
-              topic={sessionDetails?.topic || ''}
-            />
-
-             {/* Student Grid */}
-            <div className="desks-grid glass">
-              {students.map((s) => (
-                <StudentCard
-                  key={s.name}
-                  student={s}
-                  emotion={studentEmotions[s.name] || 'normal'}
-                  isActiveSpeaker={activeSpeaker === s.name}
-                  bubbleText={
-                    activeSpeaker === s.name 
-                      ? activeSpeakerText 
-                      : (isPending && pendingStudent === s.name) 
-                        ? '...' 
-                        : null
-                  }
-                  onAction={handleStudentAction}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Right Side: Chat Transcript Panel */}
-          <div className="chat-panel glass">
-            <div className="transcript-header">
-              📜 {t.recentTranscript}
-            </div>
-            
-            <div className="transcript-body">
-              {messages.map((m, idx) => {
-                const isAction = m.message_text.startsWith('[') && m.message_text.endsWith(']');
-                return (
-                  <div 
-                    key={idx} 
-                    className={`chat-bubble ${m.sender_type} ${isAction ? 'action' : ''}`}
-                    id={`chat-bubble-${idx}`}
-                  >
-                    {m.sender_type !== 'system' && !isAction && (
-                      <div className="chat-name">
-                        {m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}
-                      </div>
-                    )}
-                    <div>{m.message_text}</div>
-                  </div>
-                );
-              })}
-              
-              {isPending && (
-                <div className="chat-bubble student" style={{ fontStyle: 'italic', opacity: 0.6 }}>
-                  ✍️ Student responding...
+            {viewMode === 'gallery' ? (
+              /* Gallery View: Render student grid at full size */
+              <div className="desks-grid glass" style={{ flex: 1, minHeight: 0 }}>
+                {students.map((s) => (
+                  <StudentCard
+                    key={s.name}
+                    student={s}
+                    emotion={studentEmotions[s.name] || 'normal'}
+                    isActiveSpeaker={activeSpeaker === s.name}
+                    bubbleText={
+                      activeSpeaker === s.name 
+                        ? activeSpeakerText 
+                        : (isPending && pendingStudent === s.name) 
+                          ? '...' 
+                          : null
+                    }
+                    onAction={handleStudentAction}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* Whiteboard View: Render Blackboard canvas and scaled student filmstrip */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, minHeight: 0 }}>
+                <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                  <Blackboard 
+                    onShare={(desc) => handleSendTurn(`[Illustrated ${desc} on Blackboard]`, undefined, 'blackboard_share')}
+                    subject={sessionDetails?.subject || ''}
+                    topic={sessionDetails?.topic || ''}
+                  />
                 </div>
-              )}
-              
-              <div ref={chatEndRef} />
-            </div>
+                
+                {/* Horizontal Filmstrip of Student Desks */}
+                <div className="student-filmstrip">
+                  {students.map((s) => (
+                    <StudentCard
+                      key={s.name}
+                      student={s}
+                      emotion={studentEmotions[s.name] || 'normal'}
+                      isActiveSpeaker={activeSpeaker === s.name}
+                      bubbleText={
+                        activeSpeaker === s.name 
+                          ? activeSpeakerText 
+                          : (isPending && pendingStudent === s.name) 
+                            ? '...' 
+                            : null
+                      }
+                      onAction={handleStudentAction}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+        </div>
+      </div>
 
+      {/* Right Side Sliding Chat Drawer */}
+      <div className={`chat-drawer ${isChatOpen ? 'open' : ''}`}>
+        <div className="transcript-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid var(--border-card)' }}>
+          <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            📜 {t.recentTranscript}
+          </span>
+          <button 
+            className="btn-icon" 
+            onClick={() => setIsChatOpen(false)}
+            style={{ width: '30px', height: '30px', fontSize: '0.85rem' }}
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <div className="transcript-body" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {messages.map((m, idx) => {
+            const isAction = m.message_text.startsWith('[') && m.message_text.endsWith(']');
+            return (
+              <div 
+                key={idx} 
+                className={`chat-bubble ${m.sender_type} ${isAction ? 'action' : ''}`}
+                id={`chat-bubble-${idx}`}
+              >
+                {m.sender_type !== 'system' && !isAction && (
+                  <div className="chat-name" style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '0.15rem' }}>
+                    {m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}
+                  </div>
+                )}
+                <div style={{ fontSize: '0.85rem', lineHeight: '1.3' }}>{m.message_text}</div>
+              </div>
+            );
+          })}
+          
+          {isPending && (
+            <div className="chat-bubble student" style={{ fontStyle: 'italic', opacity: 0.6, fontSize: '0.85rem' }}>
+              ✍️ Student responding...
+            </div>
+          )}
+          
+          <div ref={chatEndRef} />
         </div>
       </div>
 
       {/* Floating Action Dock centered at bottom center */}
       <div className="floating-action-dock">
-        {/* STT Mic trigger */}
-        <button 
-          className={`mic-button ${isListening ? 'listening' : ''}`}
-          onClick={toggleListening}
-          title={isListening ? t.micListening : t.micIdle}
-          id="classroom-btn-mic"
-          type="button"
-        >
-          🎤
-        </button>
-
-        {/* Input field */}
+        {/* Input form */}
         <form 
           onSubmit={(e) => {
             e.preventDefault();
             handleSendTurn(teacherInput);
           }}
           className="text-input-container"
-          style={{ flex: 1, display: 'flex', position: 'relative' }}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', position: 'relative' }}
         >
           <input
             type="text"
-            className="text-input-field"
+            className="dock-input"
             value={teacherInput}
             onChange={(e) => setTeacherInput(e.target.value)}
             onFocus={() => setIsInputFocused(true)}
@@ -519,15 +600,39 @@ export const Classroom: React.FC<ClassroomProps> = ({
             placeholder={isListening ? t.micListening : t.typePlaceholder}
             disabled={isPending}
             id="classroom-input-text"
+            style={{ 
+              flex: 1, 
+              border: 'none', 
+              background: 'transparent', 
+              outline: 'none', 
+              padding: '0.6rem 0',
+              fontSize: '0.95rem',
+              color: 'var(--text-primary)'
+            }}
           />
-          <button 
-            type="submit" 
-            className="send-button"
-            disabled={isPending || !teacherInput.trim()}
-            id="classroom-btn-send"
-          >
-            ➔
-          </button>
+          
+          <div className="dock-action-buttons">
+            {/* STT Mic trigger */}
+            <button 
+              className={`dock-mic-button ${isListening ? 'listening' : ''}`}
+              onClick={toggleListening}
+              title={isListening ? t.micListening : t.micIdle}
+              id="classroom-btn-mic"
+              type="button"
+            >
+              🎤
+            </button>
+
+            {/* Send button */}
+            <button 
+              type="submit" 
+              className="dock-send-button"
+              disabled={isPending || !teacherInput.trim()}
+              id="classroom-btn-send"
+            >
+              ➔
+            </button>
+          </div>
         </form>
       </div>
     </div>

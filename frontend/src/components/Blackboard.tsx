@@ -9,13 +9,13 @@ interface BlackboardProps {
 export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [penColor, setPenColor] = useState('#ffffff'); // Chalk white
+  const [penColor, setPenColor] = useState('#0f172a'); // Chalk white
   const [penSize, setPenSize] = useState(3);
   const [isEraser, setIsEraser] = useState(false);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const chalkboardColor = '#172e22'; // Chalkboard Green
+  const chalkboardColor = '#fafafa'; // Whiteboard Soft White
 
   const getPresetListAndDrawer = () => {
     const top = (topic || '').toLowerCase();
@@ -554,17 +554,15 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
-    ctx.fillStyle = chalkboardColor;
+    ctx.fillStyle = '#fafafa';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.012)';
-    for (let i = 0; i < 250; i++) {
-      ctx.fillRect(
-        Math.random() * canvas.width,
-        Math.random() * canvas.height,
-        2,
-        2
-      );
+    // Draw subtle light gray dot grid (Miro/FigJam style)
+    ctx.fillStyle = '#cbd5e1'; // light slate dot color
+    for (let x = 15; x < canvas.width; x += 15) {
+      for (let y = 15; y < canvas.height; y += 15) {
+        ctx.fillRect(x, y, 1.2, 1.2);
+      }
     }
   };
 
@@ -628,8 +626,8 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     clearBoard();
     setActivePreset(preset);
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
     ctx.font = '11px monospace';
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
@@ -652,7 +650,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.beginPath(); ctx.arc(midX, midY - 20, 3, 0, Math.PI * 2); ctx.fill();
       ctx.fillText('V.P.', midX - 10, midY - 30);
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
       ctx.setLineDash([5, 5]);
       ctx.beginPath(); ctx.moveTo(midX, midY - 20); ctx.lineTo(15, h - 10); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX, midY - 20); ctx.lineTo(w - 15, h - 10); ctx.stroke();
@@ -660,7 +658,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.beginPath(); ctx.moveTo(midX, midY - 20); ctx.lineTo(w - 15, 10); ctx.stroke();
       
       ctx.setLineDash([]);
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(midX, midY - 20); ctx.lineTo(midX - 35, h - 10);
@@ -682,7 +680,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.beginPath(); ctx.moveTo(midX, midY - 40); ctx.lineTo(midX, h - 20); ctx.stroke();
 
       ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
       ctx.setLineDash([4, 4]);
       ctx.beginPath(); ctx.moveTo(vpL, vpY); ctx.lineTo(midX, midY - 40); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(vpL, vpY); ctx.lineTo(midX, h - 20); ctx.stroke();
@@ -690,7 +688,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.beginPath(); ctx.moveTo(vpR, vpY); ctx.lineTo(midX, h - 20); ctx.stroke();
 
       ctx.setLineDash([]);
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Two-Point Perspective (Lines meet at two vanishing points)', 15, 20);
 
     } else if (preset === 'three-point') {
@@ -711,12 +709,12 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.beginPath(); ctx.moveTo(midX, 45); ctx.lineTo(midX, horizonY - 15); ctx.stroke();
 
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.beginPath(); ctx.moveTo(midX - 45, 60); ctx.lineTo(midX - 58, horizonY - 15); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX + 45, 60); ctx.lineTo(midX + 58, horizonY - 15); ctx.stroke();
 
       ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
       ctx.setLineDash([3, 3]);
       ctx.beginPath(); ctx.moveTo(vpL, horizonY); ctx.lineTo(midX, 45); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(vpL, horizonY); ctx.lineTo(midX, horizonY - 15); ctx.stroke();
@@ -726,7 +724,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.beginPath(); ctx.moveTo(vpT, vpTY); ctx.lineTo(midX + 58, horizonY - 15); ctx.stroke();
 
       ctx.setLineDash([]);
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Three-Point Perspective (Zenith VP + Left/Right VPs)', 15, 20);
 
     } else if (preset === 'anatomy-head') {
@@ -784,7 +782,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.fillStyle = '#ef4444';
       const joints = [{x: midX - 26, y: 62}, {x: midX - 50, y: 70}, {x: midX - 10, y: 68}, {x: midX - 10, y: 95}, {x: midX - 35, y: 125}, {x: midX + 15, y: 115}];
       joints.forEach(j => { ctx.beginPath(); ctx.arc(j.x, j.y, 4, 0, Math.PI*2); ctx.fill(); });
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#0f172a';
       ctx.fillText('Gesture drawing: Action stick figure showing joint angles', 15, 20);
 
     } else if (preset === 'still-life') {
@@ -807,13 +805,13 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(midX, midY + 10, 45, 0, Math.PI*2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(50, h - 25); ctx.lineTo(w - 50, h - 25); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
       ctx.beginPath(); ctx.ellipse(midX + 45, h - 27, 45, 12, 0, 0, Math.PI*2); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
       for (let r = 5; r <= 45; r += 8) {
         ctx.beginPath(); ctx.ellipse(midX + 10, midY + 15, r, r - 3, Math.PI/4, 0, Math.PI, true); ctx.stroke();
       }
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Light Source (top-left)', midX - 160, 45);
       ctx.beginPath(); ctx.moveTo(midX - 140, 50); ctx.lineTo(midX - 85, 80); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 95, 80); ctx.lineTo(midX - 85, 80); ctx.lineTo(midX - 90, 72); ctx.stroke();
@@ -856,11 +854,11 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.moveTo(midX - 20, midY - 42); ctx.bezierCurveTo(midX - 10, midY - 70, midX + 20, midY - 70, midX + 10, midY - 42); ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(midX - 20, midY + 42); ctx.bezierCurveTo(midX - 10, midY + 70, midX + 20, midY + 70, midX + 10, midY + 42); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
       for (let i = -140; i < 110; i += 18) {
         ctx.beginPath(); ctx.moveTo(midX + i, midY - 35); ctx.lineTo(midX + i - 15, midY + 35); ctx.stroke();
       }
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.beginPath(); ctx.arc(midX - 120, midY - 8, 5, 0, Math.PI*2); ctx.fill();
       ctx.fillText('Indian Folk Art: Madhubani Fish (Double border, Kachni lines)', 15, 20);
 
@@ -876,12 +874,12 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.moveTo(midX, h - 35);
       ctx.quadraticCurveTo(midX - 20, midY - 10, midX, 40);
       ctx.stroke();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
       for (let y = 60; y < h - 45; y += 15) {
         ctx.beginPath(); ctx.moveTo(midX, y); ctx.quadraticCurveTo(midX - 45, y + 10, midX - 60, y - 5); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(midX, y); ctx.quadraticCurveTo(midX + 45, y + 10, midX + 60, y - 5); ctx.stroke();
       }
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Indian Folk Art: Kalamkari Decorative Paisley Motif', 15, 20);
 
     } else if (preset === 'origami-folds') {
@@ -897,7 +895,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.lineWidth = 2.5; ctx.strokeStyle = '#a5f3fc';
       ctx.beginPath(); ctx.arc(midX - 10, midY - 10, 20, Math.PI, Math.PI*1.5); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 10, midY - 33); ctx.lineTo(midX - 5, midY - 30); ctx.lineTo(midX - 12, midY - 25); ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Origami Fold: Valley Fold line & Direction arrow', 15, 20);
 
     } else if (preset === 'origami-crane') {
@@ -940,11 +938,11 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       for (let i = -50; i <= 10; i += 6) {
         ctx.beginPath(); ctx.moveTo(midX + i, midY - 35); ctx.lineTo(midX + i + 50, midY + 35); ctx.stroke();
       }
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
       for (let i = -50; i <= 10; i += 6) {
         ctx.beginPath(); ctx.moveTo(midX + i + 50, midY - 35); ctx.lineTo(midX + i, midY + 35); ctx.stroke();
       }
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Crosshatching shading style (dense overlapping)', 15, 20);
 
     } else if (preset === 'texture-stipple') {
@@ -965,7 +963,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
         ctx.arc(midX - 90 + Math.random()*180, midY - 20 + Math.random()*40, Math.random()*5 + 2, 0, Math.PI*2);
         ctx.stroke();
       }
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Organic Sponge Painting texturing effects', 15, 20);
 
     } else if (preset === 'landscape-planes') {
@@ -1424,11 +1422,11 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     } else if (preset === 'math-ratio') {
       ctx.fillText('Comparing Quantities: Ratios & Fractions:', 30, 45);
       ctx.fillStyle = '#6366f1'; ctx.fillRect(60, 70, 160, 30);
-      ctx.strokeStyle = '#ffffff'; ctx.strokeRect(60, 70, 160, 30);
-      ctx.fillStyle = '#ffffff'; ctx.fillText('Part A: 4 Units (Blue)', 70, 90);
+      ctx.strokeStyle = '#334155'; ctx.strokeRect(60, 70, 160, 30);
+      ctx.fillStyle = '#0f172a'; ctx.fillText('Part A: 4 Units (Blue)', 70, 90);
       ctx.fillStyle = '#f59e0b'; ctx.fillRect(60, 110, 80, 30);
-      ctx.strokeStyle = '#ffffff'; ctx.strokeRect(60, 110, 80, 30);
-      ctx.fillStyle = '#ffffff'; ctx.fillText('Part B: 2 Units (Orange)', 70, 130);
+      ctx.strokeStyle = '#334155'; ctx.strokeRect(60, 110, 80, 30);
+      ctx.fillStyle = '#0f172a'; ctx.fillText('Part B: 2 Units (Orange)', 70, 130);
       ctx.fillText('Ratio A:B = 4:2 = 2:1', w - 240, 105);
       ctx.fillText('Comparing Quantities: Ratios & Proportions', 15, 20);
 
@@ -1454,7 +1452,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Trigonometric Waveforms (Sine wave periodicity)', 15, 20);
 
     } else if (preset === 'math-bell') {
@@ -1469,7 +1467,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Normal (Gaussian) Distribution Bell Curve', 15, 20);
 
     } else if (preset === 'sci-photosyn') {
@@ -1516,13 +1514,13 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
         else ctx.lineTo(x, y2);
       }
       ctx.stroke();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
       for (let x = 70; x < w - 60; x += 15) {
         const y1 = midY + Math.sin(x/15) * 25;
         const y2 = midY - Math.sin(x/15) * 25;
         ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke();
       }
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Mendelian Genetics: DNA Double Helix Structure', 15, 20);
 
     } else if (preset === 'sci-circulatory') {
@@ -1530,10 +1528,10 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.strokeRect(midX - 35, 45, 70, 40); ctx.fillText('LUNGS', midX - 18, 68);
       ctx.strokeRect(midX - 35, h - 65, 70, 40); ctx.fillText('BODY', midX - 14, h - 42);
       ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(midX, midY, 15, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.fillText('Heart', midX - 15, midY + 4);
+      ctx.fillStyle = '#0f172a'; ctx.fillText('Heart', midX - 15, midY + 4);
       ctx.strokeStyle = '#ef4444'; ctx.beginPath(); ctx.arc(midX, midY, 35, -Math.PI/2, Math.PI/2); ctx.stroke();
       ctx.strokeStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(midX, midY, 35, Math.PI/2, -Math.PI/2); ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Double Circulation loop: Pulmonary & Systemic', 15, 20);
 
     } else if (preset === 'sci-neuron') {
@@ -1580,7 +1578,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.strokeRect(midX - 50, 75, 80, 80); ctx.fillText('Africa', midX - 30, 115);
       ctx.strokeRect(midX + 50, 45, 140, 70); ctx.fillText('Eurasia', midX + 90, 75);
       ctx.strokeRect(w - 130, 120, 70, 50); ctx.fillText('Australia', w - 120, 145);
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Our Earth: Continents and Oceans world map', 15, 20);
 
     } else if (preset === 'geo-landform') {
@@ -1603,13 +1601,13 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
     } else if (preset === 'geo-solar') {
       ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(midX, midY, 15, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.fillText('Sun', midX - 10, midY + 4);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.fillStyle = '#0f172a'; ctx.fillText('Sun', midX - 10, midY + 4);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
       ctx.beginPath(); ctx.arc(midX, midY, 40, 0, Math.PI*2); ctx.stroke();
       ctx.beginPath(); ctx.arc(midX, midY, 65, 0, Math.PI*2); ctx.stroke();
       ctx.beginPath(); ctx.arc(midX, midY, 90, 0, Math.PI*2); ctx.stroke();
       ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(midX - 45, midY - 45, 6, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.fillText('Earth', midX - 75, midY - 48);
+      ctx.fillStyle = '#0f172a'; ctx.fillText('Earth', midX - 75, midY - 48);
       ctx.fillText('The Earth in the Solar System & Orbits', 15, 20);
 
     } else if (preset === 'geo-grid') {
@@ -1617,11 +1615,11 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.beginPath(); ctx.arc(midX, midY, 55, 0, Math.PI*2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 55, midY); ctx.lineTo(midX + 55, midY); ctx.stroke();
       ctx.fillText('Equator (0°)', midX + 60, midY + 4);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
       ctx.beginPath(); ctx.moveTo(midX - 48, midY - 25); ctx.lineTo(midX + 48, midY - 25); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 48, midY + 25); ctx.lineTo(midX + 48, midY + 25); ctx.stroke();
       ctx.beginPath(); ctx.ellipse(midX, midY, 25, 55, 0, 0, Math.PI*2); ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Prime Meridian', midX - 35, midY - 60);
       ctx.fillText('Globe Coordinate Grid: Latitudes & Longitudes', 15, 20);
 
@@ -1642,7 +1640,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(midX - 90, h - 35); ctx.lineTo(midX - 30, h - 85); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 42, h - 85); ctx.lineTo(midX - 30, h - 85); ctx.lineTo(midX - 30, h - 73); ctx.stroke();
-      ctx.fillStyle = '#ffffff'; ctx.fillText('South-West Monsoon Winds', midX - 130, h - 15);
+      ctx.fillStyle = '#0f172a'; ctx.fillText('South-West Monsoon Winds', midX - 130, h - 15);
       ctx.fillText('Monsoon Wind Systems & Precipitation Zones', 15, 20);
 
     } else if (preset === 'geo-demographics') {
@@ -1654,7 +1652,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.fillStyle = '#fbcfe8'; ctx.fillRect(midX + 5, h - 75, 55, 15);
       ctx.fillStyle = '#6366f1'; ctx.fillRect(midX - 30, h - 105, 25, 15);
       ctx.fillStyle = '#fbcfe8'; ctx.fillRect(midX + 5, h - 105, 25, 15);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#0f172a';
       ctx.fillText('Male', midX - 50, 52); ctx.fillText('Female', midX + 15, 52);
       ctx.fillText('Broad Base = Rapid Expansion (NCERT Geography)', 15, 20);
 
@@ -1849,7 +1847,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#334155';
       ctx.fillText('Inhale (Rising)', midX - 100, 45);
       ctx.fillText('Exhale (Falling)', midX + 40, 45);
       ctx.fillText('Mindfulness: Diaphragmatic Calming Breathing Wave', 15, 20);
@@ -1987,7 +1985,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.lineWidth = 2;
       ctx.fillStyle = '#6366f1';
       ctx.beginPath(); ctx.ellipse(midX, midY, 40, 20, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#0f172a';
       ctx.fillText('TOPIC', midX - 16, midY + 4);
       const nodes = [
         { x: midX - 150, y: midY - 30, label: 'Idea A', color: '#10b981' },
@@ -1995,11 +1993,11 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
         { x: midX, y: 40, label: 'Details', color: '#d946ef' }
       ];
       nodes.forEach((n) => {
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.beginPath(); ctx.moveTo(midX, midY); ctx.lineTo(n.x, n.y); ctx.stroke();
         ctx.fillStyle = n.color;
         ctx.beginPath(); ctx.ellipse(n.x, n.y, 35, 16, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#0f172a';
         ctx.fillText(n.label, n.x - 22, n.y + 4);
       });
       ctx.fillText('Visual Mind Concept Map Outline', 15, 20);
@@ -2007,24 +2005,24 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
       ctx.lineWidth = 2;
       ctx.fillStyle = '#10b981';
       ctx.beginPath(); ctx.ellipse(midX, 35, 40, 14, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.fillText('START', midX - 18, 38);
-      ctx.strokeStyle = '#ffffff';
+      ctx.fillStyle = '#0f172a'; ctx.fillText('START', midX - 18, 38);
+      ctx.strokeStyle = '#334155';
       ctx.beginPath(); ctx.moveTo(midX, 49); ctx.lineTo(midX, 72); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 3, 67); ctx.lineTo(midX, 72); ctx.lineTo(midX + 3, 67); ctx.stroke();
       ctx.fillStyle = '#f59e0b';
       ctx.beginPath();
       ctx.moveTo(midX, 72); ctx.lineTo(midX + 50, 90); ctx.lineTo(midX, 108); ctx.lineTo(midX - 50, 90);
       ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.fillText('IF TEST?', midX - 24, 94);
+      ctx.fillStyle = '#0f172a'; ctx.fillText('IF TEST?', midX - 24, 94);
       ctx.beginPath(); ctx.moveTo(midX, 108); ctx.lineTo(midX, 135); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(midX - 3, 130); ctx.lineTo(midX, 135); ctx.lineTo(midX + 3, 130); ctx.stroke();
       ctx.fillStyle = '#3b82f6';
       ctx.fillRect(midX - 45, 135, 90, 24);
-      ctx.fillStyle = '#ffffff'; ctx.fillText('PROCESS OUT', midX - 36, 151);
+      ctx.fillStyle = '#0f172a'; ctx.fillText('PROCESS OUT', midX - 36, 151);
       ctx.fillText('Logical Process Flowchart Diagram', 15, 20);
     } else if (preset === 'grid') {
       ctx.lineWidth = 0.5;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
       for (let x = 30; x < w; x += 30) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
       }
@@ -2147,7 +2145,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
           >
             {/* Chalk Color Palette */}
             <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-              {['#ffffff', '#fef08a', '#a5f3fc', '#fbcfe8'].map((c) => (
+              {['#0f172a', '#2563eb', '#ef4444', '#0d9488'].map((c) => (
                 <button
                   key={c}
                   onClick={() => {

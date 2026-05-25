@@ -23,28 +23,33 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   onAction,
 }) => {
   // Translate emotion to human-readable attention state badge
-  const getStatusBadge = () => {
+  const getStatusBadge = (style?: React.CSSProperties) => {
     switch (emotion) {
       case 'confused':
-        return <span className="status-badge confused">Confused</span>;
+        return <span className="status-badge confused" style={style}>Confused</span>;
       case 'sleeping':
-        return <span className="status-badge sleeping">Dozing Off</span>;
+        return <span className="status-badge sleeping" style={style}>Dozing Off</span>;
       case 'distracted':
-        return <span className="status-badge distracted">Distracted</span>;
+        return <span className="status-badge distracted" style={style}>Distracted</span>;
       case 'questioning':
-        return <span className="status-badge focused">Questioning</span>;
+        return <span className="status-badge focused" style={style}>Questioning</span>;
       default:
-        return <span className="status-badge focused">Focused</span>;
+        return <span className="status-badge focused" style={style}>Focused</span>;
     }
   };
 
   return (
     <div 
-      className={`student-desk glass ${isActiveSpeaker ? 'active-speaker' : ''} ${
+      className={`student-desk saas-card ${isActiveSpeaker ? 'active-speaker' : ''} ${
         emotion === 'sleeping' ? 'sleeping' : emotion === 'distracted' ? 'distracted' : ''
       }`}
       id={`student-desk-${student.name.toLowerCase()}`}
     >
+      {/* Floating Status Indicator Pill */}
+      <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 15 }}>
+        {getStatusBadge({ margin: 0 })}
+      </div>
+
       {/* Speech bubble overlay when student speaks or is typing */}
       {bubbleText && (
         <div className="student-bubble">
@@ -60,32 +65,24 @@ export const StudentCard: React.FC<StudentCardProps> = ({
         </div>
       )}
 
-      {/* Animated SVG Avatar */}
-      <Avatar style={student.avatar_style} emotion={emotion} />
+      {/* Animated SVG Avatar with Active Speaker Ring */}
+      <div className={`student-avatar-wrapper ${isActiveSpeaker ? 'active-speaker-ring' : ''}`}>
+        <Avatar style={student.avatar_style} emotion={emotion} />
+      </div>
 
       {/* Name and Personality */}
-      <h3 style={{ fontSize: '1rem', fontWeight: 600, marginTop: '0.25rem' }}>{student.name}</h3>
-      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--text-primary)' }}>{student.name}</h3>
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0 0.5rem' }}>
         {student.personality}
       </p>
-      
-      {/* Status indicator */}
-      {getStatusBadge()}
 
-      {/* Interactive Teacher Actions Hover Overlay */}
+      {/* Interactive Teacher Actions Hover Overlay (Lower Half) */}
       <div className="student-action-overlay">
-        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: '0.15rem' }}>
-          {student.name}
-        </h4>
-        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.6rem', textAlign: 'center' }}>
-          Select Actions:
-        </p>
-        
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '100%' }}>
           {emotion === 'distracted' && (
             <button 
               className="btn-primary" 
-              style={{ width: '100%', padding: '0.3rem', fontSize: '0.7rem', background: 'var(--color-warning)', border: 'none' }}
+              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-warning)', border: 'none' }}
               onClick={() => onAction(student.name, 'focus')}
             >
               ⚠️ Remind
@@ -95,7 +92,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           {emotion === 'sleeping' && (
             <button 
               className="btn-primary" 
-              style={{ width: '100%', padding: '0.3rem', fontSize: '0.7rem', background: 'var(--color-info)', border: 'none' }}
+              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-info)', border: 'none' }}
               onClick={() => onAction(student.name, 're-engage')}
             >
               💡 Wake Up
@@ -105,7 +102,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           {emotion === 'confused' && (
             <button 
               className="btn-primary" 
-              style={{ width: '100%', padding: '0.3rem', fontSize: '0.7rem', background: 'var(--color-danger)', border: 'none' }}
+              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-danger)', border: 'none' }}
               onClick={() => onAction(student.name, 'explain_basic')}
             >
               📖 Scaffold
@@ -114,7 +111,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           
           <button 
             className="btn-secondary" 
-            style={{ width: '100%', padding: '0.3rem', fontSize: '0.7rem', border: '1px solid var(--border-card)' }}
+            style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', border: '1px solid var(--border-card)', background: 'var(--bg-secondary)' }}
             onClick={() => onAction(student.name, 'prompt')}
           >
             ❓ Call On
