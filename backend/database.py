@@ -3,13 +3,19 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Path to the database file inside the workspace
-DATABASE_URL = "sqlite:///./classroom.db"
+# Path to the database file (load from environment variable for hosting, or fallback to local SQLite)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./classroom.db")
 
-# Create engine with connect_args for SQLite to support concurrent threads
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Adjust connection settings based on the database driver
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    # Some platforms (like Render/Heroku) output 'postgres://', but SQLAlchemy requires 'postgresql://'
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
