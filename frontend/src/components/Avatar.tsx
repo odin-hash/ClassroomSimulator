@@ -67,7 +67,7 @@ export const Avatar: React.FC<AvatarProps> = ({ style, emotion }) => {
     <div className={`student-avatar-container ${animationClass}`}>
       <svg
         viewBox="0 0 100 100"
-        className="student-avatar-svg"
+        className={`student-avatar-svg ${emotion}`}
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* Background base */}

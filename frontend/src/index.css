@@ -62,17 +62,64 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
   transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
-/* Glassmorphism utility */
+/* Ambient Moving Gradient Mesh Backgrounds */
+body::before, body::after {
+  content: "";
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0.16;
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+
+body::before {
+  background: radial-gradient(circle, var(--primary) 0%, rgba(99, 102, 241, 0) 70%);
+  top: -15%;
+  left: -10%;
+  animation: float-blob-1 25s infinite alternate ease-in-out;
+}
+
+body::after {
+  background: radial-gradient(circle, var(--accent-cyan) 0%, rgba(6, 182, 212, 0) 70%);
+  bottom: -15%;
+  right: -10%;
+  animation: float-blob-2 20s infinite alternate ease-in-out;
+}
+
+@keyframes float-blob-1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(120px, 80px) scale(1.15); }
+  100% { transform: translate(-60px, 150px) scale(0.9); }
+}
+
+@keyframes float-blob-2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-140px, -70px) scale(0.85); }
+  100% { transform: translate(70px, -160px) scale(1.1); }
+}
+
+/* Glassmorphism utility with VisionOS depth */
 .glass {
-  background: var(--bg-card);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
   backdrop-filter: var(--backdrop-blur);
   -webkit-backdrop-filter: var(--backdrop-blur);
-  border: 1px solid var(--border-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  box-shadow: var(--card-shadow);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="light"] .glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
 /* Typography elements */
@@ -343,16 +390,18 @@ body {
 
 .classroom-grid-layout {
   display: grid;
-  grid-template-columns: 2fr 1.1fr;
+  grid-template-columns: 1fr 350px;
   gap: 1.5rem;
   flex: 1;
   min-height: 0; /* Important for grid scrolling */
+  padding-bottom: 5.5rem; /* Space to prevent layout overlap with bottom dock */
 }
 
 @media (max-width: 1024px) {
   .classroom-grid-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: 1.2fr 1fr;
+    grid-template-rows: auto auto;
+    padding-bottom: 7rem;
   }
 }
 
@@ -510,24 +559,25 @@ body {
 .chat-bubble {
   max-width: 85%;
   padding: 0.75rem 1rem;
-  border-radius: 12px;
   font-size: 0.9rem;
   line-height: 1.4;
   position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .chat-bubble.teacher {
   align-self: flex-end;
   background: var(--primary);
   color: white;
-  border-bottom-right-radius: 2px;
+  border-radius: 18px 18px 4px 18px;
 }
 
 .chat-bubble.student {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-card);
-  border-bottom-left-radius: 2px;
+  border-radius: 18px 18px 18px 4px;
 }
 
 [data-theme="light"] .chat-bubble.student {
@@ -545,15 +595,29 @@ body {
   color: #c7d2fe;
 }
 
-.chat-bubble.system {
+/* Semi-transparent centered pills for actions and system notifications */
+.chat-bubble.system,
+.chat-bubble.action,
+.chat-bubble.teacher.action {
   align-self: center;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  color: var(--color-warning);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
   font-size: 0.8rem;
+  border-radius: 9999px;
+  padding: 0.4rem 1.1rem;
   text-align: center;
-  max-width: 95%;
-  border-radius: 8px;
+  max-width: 90%;
+  box-shadow: none;
+  font-style: italic;
+}
+
+[data-theme="light"] .chat-bubble.system,
+[data-theme="light"] .chat-bubble.action,
+[data-theme="light"] .chat-bubble.teacher.action {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--text-secondary);
 }
 
 /* Event Popup Alert Banner */
@@ -870,4 +934,211 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* --- Phase 7 UI/UX Additions --- */
+
+/* Floating Action Dock centered at bottom of screen */
+.floating-action-dock {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(13, 17, 36, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  width: 90%;
+  max-width: 650px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="light"] .floating-action-dock {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+/* Audio Wave Ring for Active Listening Mic */
+.mic-button.listening {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: white;
+  position: relative;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+.mic-button.listening::before,
+.mic-button.listening::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: 50%;
+  border: 1px solid var(--color-danger);
+  opacity: 0.8;
+  animation: audio-wave 1.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+.mic-button.listening::after {
+  animation-delay: 0.75s;
+}
+
+@keyframes audio-wave {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+
+/* Student Desk Hover Overlay Action Menu */
+.student-action-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(13, 17, 36, 0.88);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  transform: scale(0.96);
+  z-index: 20;
+}
+
+[data-theme="light"] .student-action-overlay {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.student-desk:hover .student-action-overlay {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+/* Pulsating Emotional Glows on Student Avatars */
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.student-avatar-svg.confused {
+  border: 2.5px solid var(--color-danger) !important;
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes jitter-amber {
+  0% { transform: translate(0, 0); box-shadow: 0 0 4px rgba(245, 158, 11, 0.5); }
+  20% { transform: translate(-1px, 1px); }
+  40% { transform: translate(1px, -1px); box-shadow: 0 0 8px rgba(245, 158, 11, 0.75); }
+  60% { transform: translate(-1px, -1px); }
+  80% { transform: translate(1px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+.student-avatar-svg.distracted {
+  border: 2.5px solid var(--color-warning) !important;
+  animation: jitter-amber 0.5s infinite;
+}
+
+/* Typing Indicator Animation inside student speech bubbles */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 12px;
+  padding: 0.15rem 0.5rem;
+}
+
+.typing-indicator span {
+  width: 5px;
+  height: 5px;
+  background: var(--text-primary);
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: typing-bounce 1s infinite alternate;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-bounce {
+  0% { transform: translateY(0); opacity: 0.4; }
+  100% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Interactive Blackboard Holographic Glow */
+.holographic-board {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  background: rgba(10, 18, 40, 0.6) !important;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="light"] .holographic-board {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 0 20px rgba(79, 70, 229, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
+.blackboard-presets-select {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  background: rgba(13, 17, 36, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  max-width: 150px;
+}
+
+[data-theme="light"] .blackboard-presets-select {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.blackboard-controls-dock {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(13, 17, 36, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+[data-theme="light"] .blackboard-controls-dock {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
 }

@@ -45,10 +45,18 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       }`}
       id={`student-desk-${student.name.toLowerCase()}`}
     >
-      {/* Speech bubble overlay when student speaks */}
+      {/* Speech bubble overlay when student speaks or is typing */}
       {bubbleText && (
         <div className="student-bubble">
-          {bubbleText}
+          {bubbleText === '...' ? (
+            <div className="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          ) : (
+            bubbleText
+          )}
         </div>
       )}
 
@@ -64,59 +72,54 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       {/* Status indicator */}
       {getStatusBadge()}
 
-      {/* Interactive Teacher Management Actions (appears when off-task or confused) */}
-      <div 
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginTop: '0.75rem',
-          justifyContent: 'center',
-          width: '100%',
-        }}
-      >
-        {emotion === 'distracted' && (
-          <button 
-            className="btn-primary" 
-            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', background: 'var(--color-warning)' }}
-            onClick={() => onAction(student.name, 'focus')}
-            title="Tell student to focus on the class"
-          >
-            ⚠️ Remind
-          </button>
-        )}
+      {/* Interactive Teacher Actions Hover Overlay */}
+      <div className="student-action-overlay">
+        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: '0.15rem' }}>
+          {student.name}
+        </h4>
+        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.6rem', textAlign: 'center' }}>
+          Select Actions:
+        </p>
         
-        {emotion === 'sleeping' && (
-          <button 
-            className="btn-primary" 
-            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', background: 'var(--color-info)' }}
-            onClick={() => onAction(student.name, 're-engage')}
-            title="Ask them a question to wake them up"
-          >
-            💡 Wake Up
-          </button>
-        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '100%' }}>
+          {emotion === 'distracted' && (
+            <button 
+              className="btn-primary" 
+              style={{ width: '100%', padding: '0.3rem', fontSize: '0.7rem', background: 'var(--color-warning)', border: 'none' }}
+              onClick={() => onAction(student.name, 'focus')}
+            >
+              ⚠️ Remind
+            </button>
+          )}
+          
+          {emotion === 'sleeping' && (
+            <button 
+              className="btn-primary" 
+              style={{ width: '100%', padding: '0.3rem', fontSize: '0.7rem', background: 'var(--color-info)', border: 'none' }}
+              onClick={() => onAction(student.name, 're-engage')}
+            >
+              💡 Wake Up
+            </button>
+          )}
 
-        {emotion === 'confused' && (
-          <button 
-            className="btn-primary" 
-            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', background: 'var(--color-danger)' }}
-            onClick={() => onAction(student.name, 'explain_basic')}
-            title="Explain the concept again simply"
-          >
-            📖 Scaffold
-          </button>
-        )}
-        
-        {emotion === 'normal' && (
+          {emotion === 'confused' && (
+            <button 
+              className="btn-primary" 
+              style={{ width: '100%', padding: '0.3rem', fontSize: '0.7rem', background: 'var(--color-danger)', border: 'none' }}
+              onClick={() => onAction(student.name, 'explain_basic')}
+            >
+              📖 Scaffold
+            </button>
+          )}
+          
           <button 
             className="btn-secondary" 
-            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', border: 'none' }}
+            style={{ width: '100%', padding: '0.3rem', fontSize: '0.7rem', border: '1px solid var(--border-card)' }}
             onClick={() => onAction(student.name, 'prompt')}
-            title="Ask this student to answer"
           >
             ❓ Call On
           </button>
-        )}
+        </div>
       </div>
     </div>
   );

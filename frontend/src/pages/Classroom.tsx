@@ -61,6 +61,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const [teacherInput, setTeacherInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [pendingStudent, setPendingStudent] = useState<string | null>(null);
 
   // Timer states
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes default in seconds
@@ -189,6 +190,11 @@ export const Classroom: React.FC<ClassroomProps> = ({
     if (!messageText.trim() && !actionType) return;
     
     setIsPending(true);
+    if (addressedStudent) {
+      setPendingStudent(addressedStudent);
+    } else {
+      setPendingStudent(null);
+    }
     setTeacherInput('');
     if (isListening) {
       recognitionRef.current?.stop();
@@ -305,6 +311,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
       console.error('Error submitting teacher input:', error);
     } finally {
       setIsPending(false);
+      setPendingStudent(null);
     }
   };
 
@@ -419,7 +426,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
             topic={sessionDetails?.topic || ''}
           />
 
-          {/* Student Grid */}
+           {/* Student Grid */}
           <div className="desks-grid glass">
             {students.map((s) => (
               <StudentCard
@@ -427,7 +434,13 @@ export const Classroom: React.FC<ClassroomProps> = ({
                 student={s}
                 emotion={studentEmotions[s.name] || 'normal'}
                 isActiveSpeaker={activeSpeaker === s.name}
-                bubbleText={activeSpeaker === s.name ? activeSpeakerText : null}
+                bubbleText={
+                  activeSpeaker === s.name 
+                    ? activeSpeakerText 
+                    : (isPending && pendingStudent === s.name) 
+                      ? '...' 
+                      : null
+                }
                 onAction={handleStudentAction}
               />
             ))}
@@ -441,20 +454,23 @@ export const Classroom: React.FC<ClassroomProps> = ({
           </div>
           
           <div className="transcript-body">
-            {messages.map((m, idx) => (
-              <div 
-                key={idx} 
-                className={`chat-bubble ${m.sender_type}`}
-                id={`chat-bubble-${idx}`}
-              >
-                {m.sender_type !== 'system' && (
-                  <div className="chat-name">
-                    {m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}
-                  </div>
-                )}
-                <div>{m.message_text}</div>
-              </div>
-            ))}
+            {messages.map((m, idx) => {
+              const isAction = m.message_text.startsWith('[') && m.message_text.endsWith(']');
+              return (
+                <div 
+                  key={idx} 
+                  className={`chat-bubble ${m.sender_type} ${isAction ? 'action' : ''}`}
+                  id={`chat-bubble-${idx}`}
+                >
+                  {m.sender_type !== 'system' && !isAction && (
+                    <div className="chat-name">
+                      {m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}
+                    </div>
+                  )}
+                  <div>{m.message_text}</div>
+                </div>
+              );
+            })}
             
             {isPending && (
               <div className="chat-bubble student" style={{ fontStyle: 'italic', opacity: 0.6 }}>
@@ -464,48 +480,50 @@ export const Classroom: React.FC<ClassroomProps> = ({
             
             <div ref={chatEndRef} />
           </div>
-
-          {/* Input Controls */}
-          <div className="controls-bar">
-            {/* STT Mic trigger */}
-            <button 
-              className={`mic-button ${isListening ? 'listening' : ''}`}
-              onClick={toggleListening}
-              title={isListening ? t.micListening : t.micIdle}
-              id="classroom-btn-mic"
-            >
-              🎤
-            </button>
-
-            {/* Input field */}
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendTurn(teacherInput);
-              }}
-              className="text-input-container"
-            >
-              <input
-                type="text"
-                className="text-input-field"
-                value={teacherInput}
-                onChange={(e) => setTeacherInput(e.target.value)}
-                placeholder={isListening ? t.micListening : t.typePlaceholder}
-                disabled={isPending}
-                id="classroom-input-text"
-              />
-              <button 
-                type="submit" 
-                className="send-button"
-                disabled={isPending || !teacherInput.trim()}
-                id="classroom-btn-send"
-              >
-                ➔
-              </button>
-            </form>
-          </div>
         </div>
 
+      </div>
+
+      {/* Floating Action Dock centered at bottom center */}
+      <div className="floating-action-dock">
+        {/* STT Mic trigger */}
+        <button 
+          className={`mic-button ${isListening ? 'listening' : ''}`}
+          onClick={toggleListening}
+          title={isListening ? t.micListening : t.micIdle}
+          id="classroom-btn-mic"
+          type="button"
+        >
+          🎤
+        </button>
+
+        {/* Input field */}
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendTurn(teacherInput);
+          }}
+          className="text-input-container"
+          style={{ flex: 1, display: 'flex', position: 'relative' }}
+        >
+          <input
+            type="text"
+            className="text-input-field"
+            value={teacherInput}
+            onChange={(e) => setTeacherInput(e.target.value)}
+            placeholder={isListening ? t.micListening : t.typePlaceholder}
+            disabled={isPending}
+            id="classroom-input-text"
+          />
+          <button 
+            type="submit" 
+            className="send-button"
+            disabled={isPending || !teacherInput.trim()}
+            id="classroom-btn-send"
+          >
+            ➔
+          </button>
+        </form>
       </div>
     </div>
   );

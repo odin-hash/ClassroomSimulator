@@ -13,6 +13,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
   const [penSize, setPenSize] = useState(3);
   const [isEraser, setIsEraser] = useState(false);
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const chalkboardColor = '#172e22'; // Chalkboard Green
 
@@ -2046,153 +2047,197 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
     onShare(description);
   };
-
-  const btnStyle = { padding: '0.35rem 0.65rem', fontSize: '0.75rem' };
-
   return (
     <div 
-      className="glass" 
+      className="glass holographic-board" 
       style={{ 
         display: 'flex', 
         flexDirection: 'column', 
         padding: '1rem', 
         gap: '0.75rem',
-        background: 'rgba(20, 28, 58, 0.5)',
-        borderRadius: '16px',
         width: '100%',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--accent-cyan)' }}>
-          🖍️ Interactive Chalkboard ({categoryName})
-        </span>
-        
-        {/* Dynamic Presets list */}
-        <div style={{ display: 'flex', gap: '0.35rem' }}>
-          {presets.map((p) => (
-            <button
-              key={p.id}
-              className={`btn-secondary ${activePreset === p.id ? 'active-preset' : ''}`}
-              style={{
-                ...btnStyle,
-                border: activePreset === p.id ? '1px solid var(--primary)' : '1px solid var(--border-card)',
-                background: activePreset === p.id ? 'var(--primary)' : ''
-              }}
-              onClick={() => applyPreset(p.id)}
-            >
-              {p.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="btn-icon"
+            style={{ fontSize: '1rem', padding: '0.25rem', width: '24px', height: '24px' }}
+            title={isExpanded ? "Collapse Board" : "Expand Board"}
+            type="button"
+          >
+            {isExpanded ? '🔽' : '▶️'}
+          </button>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-cyan)' }}>
+            🖍️ Chalkboard ({categoryName})
+          </span>
         </div>
+        
+        {/* Presets Selector Dropdown (Saves horizontal space) */}
+        {isExpanded && presets.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Presets:</span>
+            <select
+              className="blackboard-presets-select"
+              value={activePreset || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val) {
+                  applyPreset(val);
+                } else {
+                  setActivePreset(null);
+                  initCanvas();
+                }
+              }}
+              id="blackboard-presets-dropdown"
+            >
+              <option value="">-- No Preset --</option>
+              {presets.map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      {/* Chalkboard Canvas Area */}
-      <div 
-        style={{ 
-          position: 'relative',
-          borderRadius: '8px', 
-          overflow: 'hidden', 
-          border: '4px solid #4b5563', // Wooden border frame
-          boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
-          width: '100%',
-          height: '200px'
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          width={650}
-          height={192}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          style={{ width: '100%', height: '100%', cursor: 'crosshair', display: 'block' }}
-        />
-      </div>
-
-      {/* Toolbar Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-        
-        {/* Colors and brush sizes */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Chalk:</span>
-            {['#ffffff', '#fef08a', '#a5f3fc', '#fbcfe8'].map((c) => (
-              <button
-                key={c}
-                onClick={() => {
-                  setPenColor(c);
-                  setIsEraser(false);
-                }}
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  backgroundColor: c,
-                  border: penColor === c && !isEraser ? '2px solid var(--primary)' : '1px solid #777',
-                  cursor: 'pointer'
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Size select */}
-          <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Size:</span>
-            {[2, 5, 8].map((s) => (
-              <button
-                key={s}
-                onClick={() => setPenSize(s)}
-                style={{
-                  padding: '0.1rem 0.4rem',
-                  fontSize: '0.75rem',
-                  borderRadius: '4px',
-                  background: penSize === s ? 'var(--primary)' : 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border-card)',
-                  cursor: 'pointer'
-                }}
-              >
-                {s === 2 ? 'Thin' : s === 5 ? 'Med' : 'Thick'}
-              </button>
-            ))}
-          </div>
-
-          {/* Eraser / Clean */}
-          <div style={{ display: 'flex', gap: '0.3rem' }}>
-            <button
-              onClick={() => setIsEraser(!isEraser)}
-              className="btn-secondary"
-              style={{ 
-                padding: '0.25rem 0.5rem', 
-                fontSize: '0.75rem',
-                border: isEraser ? '1px solid var(--primary)' : '1px solid var(--border-card)',
-                background: isEraser ? 'var(--primary-glow)' : ''
-              }}
-            >
-              🧽 Eraser
-            </button>
-            <button
-              onClick={clearBoard}
-              className="btn-secondary"
-              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-            >
-              🧹 Clear
-            </button>
-          </div>
-        </div>
-
-        {/* Share illustrations button */}
-        <button
-          onClick={handleShareClick}
-          className="btn-primary"
-          style={{ padding: '0.45rem 1.25rem', fontSize: '0.85rem' }}
-          id="blackboard-btn-share"
+      {/* Chalkboard Canvas & Floating Toolbar (Visible only when expanded) */}
+      {isExpanded && (
+        <div 
+          style={{ 
+            position: 'relative',
+            borderRadius: '8px', 
+            overflow: 'hidden', 
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            width: '100%',
+            height: '192px'
+          }}
         >
-          📤 Share Board with Class
-        </button>
+          <canvas
+            ref={canvasRef}
+            width={650}
+            height={192}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            style={{ width: '100%', height: '100%', cursor: 'crosshair', display: 'block' }}
+          />
 
-      </div>
+          {/* Centered Floating Toolbar Pill Menu */}
+          <div 
+            className="blackboard-controls-dock"
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}
+          >
+            {/* Chalk Color Palette */}
+            <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+              {['#ffffff', '#fef08a', '#a5f3fc', '#fbcfe8'].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => {
+                    setPenColor(c);
+                    setIsEraser(false);
+                  }}
+                  style={{
+                    width: '14px',
+                    height: '14px',
+                    borderRadius: '50%',
+                    backgroundColor: c,
+                    border: penColor === c && !isEraser ? '1.5px solid var(--primary)' : '1px solid #777',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                  title={`Chalk color ${c}`}
+                  type="button"
+                />
+              ))}
+            </div>
+
+            <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
+
+            {/* Brush Sizes */}
+            <div style={{ display: 'flex', gap: '0.2rem', alignItems: 'center' }}>
+              {[2, 5, 8].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setPenSize(s)}
+                  style={{
+                    padding: '0.1rem 0.35rem',
+                    fontSize: '0.65rem',
+                    borderRadius: '4px',
+                    background: penSize === s ? 'var(--primary)' : 'transparent',
+                    color: 'var(--text-primary)',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                  type="button"
+                >
+                  {s === 2 ? 'Thin' : s === 5 ? 'Med' : 'Thick'}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
+
+            {/* Eraser / Clear */}
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <button
+                onClick={() => setIsEraser(!isEraser)}
+                style={{ 
+                  padding: '0.15rem 0.4rem', 
+                  fontSize: '0.65rem',
+                  borderRadius: '4px',
+                  border: 'none',
+                  background: isEraser ? 'var(--primary-glow)' : 'transparent',
+                  color: isEraser ? 'var(--primary)' : 'var(--text-primary)',
+                  cursor: 'pointer'
+                }}
+                type="button"
+              >
+                🧽 Eraser
+              </button>
+              <button
+                onClick={clearBoard}
+                style={{ 
+                  padding: '0.15rem 0.4rem', 
+                  fontSize: '0.65rem', 
+                  borderRadius: '4px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer'
+                }}
+                type="button"
+              >
+                🧹 Clear
+              </button>
+            </div>
+
+            <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)' }} />
+
+            {/* Share Illustrations Button */}
+            <button
+              onClick={handleShareClick}
+              className="btn-primary"
+              style={{ padding: '0.2rem 0.6rem', fontSize: '0.65rem', borderRadius: '4px' }}
+              id="blackboard-btn-share"
+              type="button"
+            >
+              📤 Share
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
