@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TRANSLATIONS } from '../localization';
 import type { Language } from '../localization';
+import { API_BASE_URL } from '../config';
+
 
 interface AnalyticsProps {
   sessionId: number;
@@ -49,14 +51,14 @@ export const Analytics: React.FC<AnalyticsProps> = ({
     const fetchAll = async () => {
       try {
         // First end session to generate analytics (or load if already exists)
-        const endRes = await fetch(`http://localhost:8000/api/sessions/${sessionId}/end`, {
+        const endRes = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}/end`, {
           method: 'POST',
         });
         const analyticsData = await endRes.json();
         setAnalytics(analyticsData);
 
         // Get session details and messages
-        const detailsRes = await fetch(`http://localhost:8000/api/sessions/${sessionId}`);
+        const detailsRes = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`);
         const detailsData = await detailsRes.json();
         setSessionDetails(detailsData);
 

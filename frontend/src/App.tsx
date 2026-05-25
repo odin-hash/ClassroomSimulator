@@ -5,6 +5,7 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { Dashboard } from './pages/Dashboard';
 import { Classroom } from './pages/Classroom';
 import { Analytics } from './pages/Analytics';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [language, setLanguage] = useState<Language>('English');
@@ -16,7 +17,7 @@ function App() {
   // Callback to start a new classroom simulation
   const handleStartSession = async (sessionData: any) => {
     try {
-      const response = await fetch('http://localhost:8000/api/sessions', {
+      const response = await fetch(`${API_BASE_URL}/api/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sessionData),

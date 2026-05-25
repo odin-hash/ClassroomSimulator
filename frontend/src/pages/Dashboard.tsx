@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { TRANSLATIONS } from '../localization';
 import type { Language } from '../localization';
 import { SYLLABUS } from '../syllabus';
+import { API_BASE_URL } from '../config';
+
 
 interface DashboardProps {
   language: Language;
@@ -103,7 +105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Load history from API
   useEffect(() => {
-    fetch('http://localhost:8000/api/sessions')
+    fetch(`${API_BASE_URL}/api/sessions`)
       .then((res) => {
         if (!res.ok) throw new Error('API offline');
         return res.json();

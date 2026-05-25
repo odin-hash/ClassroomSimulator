@@ -4,6 +4,8 @@ import type { Language } from '../localization';
 import { StudentCard } from '../components/StudentCard';
 import { EventPopup } from '../components/EventPopup';
 import { Blackboard } from '../components/Blackboard';
+import { API_BASE_URL } from '../config';
+
 
 interface ClassroomProps {
   sessionId: number;
@@ -70,7 +72,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
   // 1. Fetch Session Info & Students list
   useEffect(() => {
     // Get students list
-    fetch('http://localhost:8000/api/students')
+    fetch(`${API_BASE_URL}/api/students`)
       .then((res) => res.json())
       .then((data) => {
         setStudents(data);
@@ -83,7 +85,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
       });
 
     // Get specific session configuration
-    fetch(`http://localhost:8000/api/sessions/${sessionId}`)
+    fetch(`${API_BASE_URL}/api/sessions/${sessionId}`)
       .then((res) => res.json())
       .then((data) => {
         setSessionDetails(data);
@@ -201,7 +203,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
     setMessages((prev) => [...prev, tempTeacherMsg]);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/sessions/${sessionId}/turns`, {
+      const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}/turns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
