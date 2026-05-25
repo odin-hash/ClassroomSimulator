@@ -411,67 +411,67 @@ export const Classroom: React.FC<ClassroomProps> = ({
         </button>
       </div>
 
-      <div className="classroom-dimmed-layer" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, minHeight: 0, padding: '1.5rem 2.5rem 1.5rem 1.5rem' }}>
-        {/* Top Header Navbar */}
-        <div className="classroom-header glass" style={{ padding: '0.75rem 1.5rem', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {sessionDetails?.subject}: <span className="gradient-text">{sessionDetails?.topic}</span>
-            </h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              {t.classLevel}: {sessionDetails?.class_level}
-            </p>
-          </div>
-
-          {/* Segmented View Toggles */}
-          <div className="view-toggle-bar">
-            <button 
-              className={`view-toggle-btn ${viewMode === 'gallery' ? 'active' : ''}`}
-              onClick={() => setViewMode('gallery')}
-              type="button"
-            >
-              👥 Gallery
-            </button>
-            <button 
-              className={`view-toggle-btn ${viewMode === 'whiteboard' ? 'active' : ''}`}
-              onClick={() => setViewMode('whiteboard')}
-              type="button"
-            >
-              📝 Whiteboard
-            </button>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {/* Countdown Clock */}
-            <div 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem', 
-                background: 'rgba(239, 68, 68, 0.08)', 
-                padding: '0.4rem 0.8rem', 
-                borderRadius: '8px',
-                border: '1px solid rgba(239, 68, 68, 0.15)',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                color: timeLeft < 60 ? 'var(--color-danger)' : 'var(--text-primary)'
-              }}
-            >
-              ⏱️ {formatTime(timeLeft)}
-            </div>
-
-            {/* Toggle Chat Drawer Button */}
-            <button
-              className={`btn-secondary ${isChatOpen ? 'active' : ''}`}
-              style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-              onClick={() => setIsChatOpen(!isChatOpen)}
-              type="button"
-            >
-              💬 Transcript
-            </button>
-          </div>
+      {/* Top Header Navbar */}
+      <div className="classroom-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            {sessionDetails?.subject}: <span className="gradient-text">{sessionDetails?.topic}</span>
+          </h2>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            {t.classLevel}: {sessionDetails?.class_level}
+          </p>
         </div>
 
+        {/* Segmented View Toggles */}
+        <div className="view-toggle-bar">
+          <button 
+            className={`view-toggle-btn ${viewMode === 'gallery' ? 'active' : ''}`}
+            onClick={() => setViewMode('gallery')}
+            type="button"
+          >
+            👥 Gallery
+          </button>
+          <button 
+            className={`view-toggle-btn ${viewMode === 'whiteboard' ? 'active' : ''}`}
+            onClick={() => setViewMode('whiteboard')}
+            type="button"
+          >
+            📝 Whiteboard
+          </button>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {/* Countdown Clock */}
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              background: 'rgba(239, 68, 68, 0.08)', 
+              padding: '0.4rem 0.8rem', 
+              borderRadius: '8px',
+              border: '1px solid rgba(239, 68, 68, 0.15)',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              color: timeLeft < 60 ? 'var(--color-danger)' : 'var(--text-primary)'
+            }}
+          >
+            ⏱️ {formatTime(timeLeft)}
+          </div>
+
+          {/* Toggle Chat Drawer Button */}
+          <button
+            className={`btn-secondary ${isChatOpen ? 'active' : ''}`}
+            style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            type="button"
+          >
+            💬 Transcript
+          </button>
+        </div>
+      </div>
+
+      <div className="classroom-dimmed-layer" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, minHeight: 0, padding: '1.5rem 2.5rem 1.5rem 1.5rem' }}>
         {/* Main Grid View */}
         <div className="classroom-grid-layout" style={{ gridTemplateColumns: '1fr' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
