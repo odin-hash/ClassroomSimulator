@@ -60,65 +60,69 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Navbar Header */}
-      <header className="navbar">
-        <div className="nav-logo" onClick={handleBackToDashboard} style={{ cursor: 'pointer' }}>
-          <span style={{ fontSize: '1.75rem' }}>🏫</span>
-          <div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, lineHeight: 1.1 }}>
-              {t.title}
-            </h1>
-            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-              {t.subtitle}
-            </p>
-          </div>
-        </div>
-
-        <div className="nav-actions">
-          {/* Language selector */}
-          <select 
-            className="lang-select"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
-            id="nav-lang-select"
-          >
-            <option value="English">English</option>
-            <option value="Hindi">हिंदी (Hindi)</option>
-            <option value="Bengali">বাংলা (Bengali)</option>
-          </select>
-
-          {/* Theme switcher */}
-          <ThemeToggle />
-        </div>
-      </header>
-
-      {/* Page Routing Container */}
-      <main className="main-content">
-        {currentPage === 'dashboard' && (
-          <Dashboard
-            language={language}
-            onStartSession={handleStartSession}
-            onSelectPastSession={handleSelectPastSession}
-          />
-        )}
-
-        {currentPage === 'classroom' && currentSessionId !== null && (
+      {currentPage === 'classroom' ? (
+        currentSessionId !== null && (
           <Classroom
             sessionId={currentSessionId}
             language={language}
             onEndSession={handleEndSession}
             onExit={handleExit}
           />
-        )}
+        )
+      ) : (
+        <>
+          {/* Navbar Header */}
+          <header className="navbar">
+            <div className="nav-logo" onClick={handleBackToDashboard} style={{ cursor: 'pointer' }}>
+              <span style={{ fontSize: '1.75rem' }}>🏫</span>
+              <div>
+                <h1 style={{ fontSize: '1.25rem', fontWeight: 800, lineHeight: 1.1 }}>
+                  {t.title}
+                </h1>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                  {t.subtitle}
+                </p>
+              </div>
+            </div>
 
-        {currentPage === 'analytics' && currentSessionId !== null && (
-          <Analytics
-            sessionId={currentSessionId}
-            language={language}
-            onBackToDashboard={handleBackToDashboard}
-          />
-        )}
-      </main>
+            <div className="nav-actions">
+              {/* Language selector */}
+              <select 
+                className="lang-select"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as Language)}
+                id="nav-lang-select"
+              >
+                <option value="English">English</option>
+                <option value="Hindi">हिंदी (Hindi)</option>
+                <option value="Bengali">বাংলা (Bengali)</option>
+              </select>
+
+              {/* Theme switcher */}
+              <ThemeToggle />
+            </div>
+          </header>
+
+          {/* Page Routing Container */}
+          <main className="main-content">
+            {currentPage === 'dashboard' && (
+              <Dashboard
+                language={language}
+                onStartSession={handleStartSession}
+                onSelectPastSession={handleSelectPastSession}
+              />
+            )}
+
+            {currentPage === 'analytics' && currentSessionId !== null && (
+              <Analytics
+                sessionId={currentSessionId}
+                language={language}
+                onBackToDashboard={handleBackToDashboard}
+              />
+            )}
+          </main>
+        </>
+      )}
     </div>
   );
 }
