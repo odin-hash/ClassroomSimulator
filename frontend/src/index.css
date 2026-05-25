@@ -1,14 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap');
 
 /* Base Styles and CSS Variables */
 :root {
   --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
   
   /* Dark Theme (Default) */
-  --bg-primary: #070913;
-  --bg-secondary: #0d1124;
-  --bg-card: rgba(20, 28, 58, 0.45);
-  --border-card: rgba(255, 255, 255, 0.08);
+  --bg-primary: #050505;
+  --bg-secondary: #0d0d0d;
+  --bg-card: rgba(15, 15, 15, 0.45);
+  --border-card: rgba(255, 255, 255, 0.05);
   --border-glow: rgba(99, 102, 241, 0.2);
   --text-primary: #f3f4f6;
   --text-secondary: #9ca3af;
@@ -27,8 +28,8 @@
   --color-danger: #ef4444;
   --color-info: #3b82f6;
   
-  --backdrop-blur: blur(16px);
-  --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --backdrop-blur: blur(24px);
+  --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
   --transition-speed: 0.3s;
 }
 
@@ -74,7 +75,7 @@ body::before, body::after {
   height: 600px;
   border-radius: 50%;
   filter: blur(140px);
-  opacity: 0.16;
+  opacity: 0.12;
   z-index: -1;
   pointer-events: none;
   transition: opacity 0.5s;
@@ -108,12 +109,12 @@ body::after {
 
 /* Glassmorphism utility with VisionOS depth */
 .glass {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-  backdrop-filter: var(--backdrop-blur);
-  -webkit-backdrop-filter: var(--backdrop-blur);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 15, 15, 0.4);
+  backdrop-filter: var(--backdrop-blur) saturate(180%);
+  -webkit-backdrop-filter: var(--backdrop-blur) saturate(180%);
+  border: 1px solid var(--border-card);
   border-radius: 16px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] .glass {
@@ -127,19 +128,25 @@ body::after {
   background: linear-gradient(135deg, var(--primary) 0%, var(--accent-cyan) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-weight: 800;
 }
 
 .gradient-title {
   background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  letter-spacing: -0.04em;
 }
 
 [data-theme="light"] .gradient-title {
   background: linear-gradient(135deg, #1e293b 30%, #4f46e5 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  letter-spacing: -0.04em;
 }
+
 
 /* App Layout */
 .app-container {
@@ -211,8 +218,8 @@ body::after {
 /* Pages layouts */
 .main-content {
   flex: 1;
-  padding: 2rem;
-  max-width: 1400px;
+  padding: 2.5rem 2rem;
+  max-width: 1600px;
   width: 100%;
   margin: 0 auto;
 }
@@ -269,7 +276,7 @@ body::after {
   font-weight: 600;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s ease, background 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -277,12 +284,12 @@ body::after {
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px var(--primary-glow);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 25px var(--primary-glow);
 }
 
 .btn-primary:active {
-  transform: translateY(1px);
+  transform: translateY(0) scale(1.0);
 }
 
 .btn-secondary {
@@ -294,7 +301,7 @@ body::after {
   font-family: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s ease, box-shadow 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -303,6 +310,12 @@ body::after {
 
 .btn-secondary:hover {
   background-color: var(--border-card);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.btn-secondary:active {
+  transform: translateY(0) scale(1.0);
 }
 
 /* Dashboard view */
@@ -448,8 +461,8 @@ body::after {
 }
 
 .student-desk.active-speaker {
-  border-color: var(--primary);
-  box-shadow: 0 0 20px var(--primary-glow);
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 35px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .student-avatar-container {
@@ -526,6 +539,12 @@ body::after {
   padding: 0.2rem 0.5rem;
   border-radius: 9999px;
   margin-top: 0.25rem;
+  animation: badge-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes badge-slide-up {
+  0% { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 .status-badge.focused { background: rgba(16, 185, 129, 0.15); color: var(--color-success); }
@@ -559,8 +578,9 @@ body::after {
 .chat-bubble {
   max-width: 85%;
   padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.5;
   position: relative;
   transition: all 0.2s ease;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -695,13 +715,13 @@ body::after {
   width: 100%;
   padding: 0.85rem 3.5rem 0.85rem 1.25rem;
   border-radius: 25px;
-  background: rgba(10, 14, 26, 0.8);
+  background: rgba(15, 15, 15, 0.85);
   border: 1px solid var(--border-card);
   color: var(--text-primary);
-  font-family: inherit;
-  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .text-input-field:focus {
@@ -1034,29 +1054,26 @@ body::after {
 }
 
 /* Pulsating Emotional Glows on Student Avatars */
-@keyframes pulse-red {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+@keyframes pulse-red-glow {
+  0% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.85); }
+  100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
 }
 
 .student-avatar-svg.confused {
-  border: 2.5px solid var(--color-danger) !important;
-  animation: pulse-red 2s infinite;
+  border: 2px solid rgba(239, 68, 68, 0.4) !important;
+  animation: pulse-red-glow 2s infinite;
 }
 
-@keyframes jitter-amber {
-  0% { transform: translate(0, 0); box-shadow: 0 0 4px rgba(245, 158, 11, 0.5); }
-  20% { transform: translate(-1px, 1px); }
-  40% { transform: translate(1px, -1px); box-shadow: 0 0 8px rgba(245, 158, 11, 0.75); }
-  60% { transform: translate(-1px, -1px); }
-  80% { transform: translate(1px, 1px); }
-  100% { transform: translate(0, 0); }
+@keyframes jitter-amber-glow {
+  0% { transform: translate(0, 0); box-shadow: 0 0 5px rgba(245, 158, 11, 0.4); }
+  50% { transform: translate(-0.5px, 0.5px); box-shadow: 0 0 22px rgba(245, 158, 11, 0.85); }
+  100% { transform: translate(0, 0); box-shadow: 0 0 5px rgba(245, 158, 11, 0.4); }
 }
 
 .student-avatar-svg.distracted {
-  border: 2.5px solid var(--color-warning) !important;
-  animation: jitter-amber 0.5s infinite;
+  border: 2px solid rgba(245, 158, 11, 0.4) !important;
+  animation: jitter-amber-glow 0.5s infinite;
 }
 
 /* Typing Indicator Animation inside student speech bubbles */
@@ -1129,16 +1146,37 @@ body::after {
   align-items: center;
   gap: 0.75rem;
   padding: 0.35rem 0.75rem;
-  background: rgba(13, 17, 36, 0.8);
+  background: rgba(15, 15, 15, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  opacity: 0.18;
+  transform: translateX(-50%) scale(0.92);
+  transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.blackboard-controls-dock:hover,
+.blackboard-controls-dock:focus-within {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.0);
 }
 
 [data-theme="light"] .blackboard-controls-dock {
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+
+/* Immersive Classroom Dimming Layer on Input Focus */
+.classroom-dimmed-layer {
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: opacity, filter;
+}
+
+.classroom-dimmed .classroom-dimmed-layer {
+  opacity: 0.28;
+  filter: blur(2px) grayscale(20%);
+  pointer-events: none;
 }

@@ -62,6 +62,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [pendingStudent, setPendingStudent] = useState<string | null>(null);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Timer states
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes default in seconds
@@ -354,134 +355,136 @@ export const Classroom: React.FC<ClassroomProps> = ({
   };
 
   return (
-    <div className="classroom-container">
-      {/* Top Header */}
-      <div className="classroom-header glass">
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-            {t.classroomStatus}: <span className="gradient-text">{sessionDetails?.subject}</span>
-          </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            {t.topic}: <strong>{sessionDetails?.topic}</strong> | {t.classLevel}: {sessionDetails?.class_level}
-          </p>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          {/* Countdown Clock */}
-          <div 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              background: 'rgba(239, 68, 68, 0.1)', 
-              padding: '0.5rem 1rem', 
-              borderRadius: '8px',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              fontWeight: 700,
-              fontSize: '1rem',
-              color: timeLeft < 60 ? 'var(--color-danger)' : 'var(--text-primary)'
-            }}
-          >
-            ⏱️ {formatTime(timeLeft)}
-          </div>
-
-          <button 
-            className="btn-secondary" 
-            onClick={() => {
-              setTimerActive(false);
-              onExit();
-            }}
-            id="classroom-btn-exit"
-          >
-            {t.backBtn}
-          </button>
-
-          <button 
-            className="btn-primary" 
-            style={{ background: 'linear-gradient(135deg, var(--color-success) 0%, #059669 100%)' }}
-            onClick={() => {
-              setTimerActive(false);
-              onEndSession(sessionId);
-            }}
-            id="classroom-btn-end"
-          >
-            {t.endBtn}
-          </button>
-        </div>
-      </div>
-
-      {/* Main Grid: Desks vs Chat Transcript */}
-      <div className="classroom-grid-layout">
-        
-        {/* Left Side: Classroom seats & Events banner */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
-          
-          {/* Active Event Banner */}
-          <EventPopup event={activeEvent} />
-
-          {/* Virtual Blackboard Illustration Board */}
-          <Blackboard 
-            onShare={(desc) => handleSendTurn(`[Illustrated ${desc} on Blackboard]`, undefined, 'blackboard_share')}
-            subject={sessionDetails?.subject || ''}
-            topic={sessionDetails?.topic || ''}
-          />
-
-           {/* Student Grid */}
-          <div className="desks-grid glass">
-            {students.map((s) => (
-              <StudentCard
-                key={s.name}
-                student={s}
-                emotion={studentEmotions[s.name] || 'normal'}
-                isActiveSpeaker={activeSpeaker === s.name}
-                bubbleText={
-                  activeSpeaker === s.name 
-                    ? activeSpeakerText 
-                    : (isPending && pendingStudent === s.name) 
-                      ? '...' 
-                      : null
-                }
-                onAction={handleStudentAction}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Right Side: Chat Transcript Panel */}
-        <div className="chat-panel glass">
-          <div className="transcript-header">
-            📜 {t.recentTranscript}
+    <div className={`classroom-container ${isInputFocused ? 'classroom-dimmed' : ''}`}>
+      <div className="classroom-dimmed-layer" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', flex: 1, minHeight: 0 }}>
+        {/* Top Header */}
+        <div className="classroom-header glass">
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+              {t.classroomStatus}: <span className="gradient-text">{sessionDetails?.subject}</span>
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              {t.topic}: <strong>{sessionDetails?.topic}</strong> | {t.classLevel}: {sessionDetails?.class_level}
+            </p>
           </div>
           
-          <div className="transcript-body">
-            {messages.map((m, idx) => {
-              const isAction = m.message_text.startsWith('[') && m.message_text.endsWith(']');
-              return (
-                <div 
-                  key={idx} 
-                  className={`chat-bubble ${m.sender_type} ${isAction ? 'action' : ''}`}
-                  id={`chat-bubble-${idx}`}
-                >
-                  {m.sender_type !== 'system' && !isAction && (
-                    <div className="chat-name">
-                      {m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}
-                    </div>
-                  )}
-                  <div>{m.message_text}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            {/* Countdown Clock */}
+            <div 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                background: 'rgba(239, 68, 68, 0.1)', 
+                padding: '0.5rem 1rem', 
+                borderRadius: '8px',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                fontWeight: 700,
+                fontSize: '1rem',
+                color: timeLeft < 60 ? 'var(--color-danger)' : 'var(--text-primary)'
+              }}
+            >
+              ⏱️ {formatTime(timeLeft)}
+            </div>
+
+            <button 
+              className="btn-secondary" 
+              onClick={() => {
+                setTimerActive(false);
+                onExit();
+              }}
+              id="classroom-btn-exit"
+            >
+              {t.backBtn}
+            </button>
+
+            <button 
+              className="btn-primary" 
+              style={{ background: 'linear-gradient(135deg, var(--color-success) 0%, #059669 100%)' }}
+              onClick={() => {
+                setTimerActive(false);
+                onEndSession(sessionId);
+              }}
+              id="classroom-btn-end"
+            >
+              {t.endBtn}
+            </button>
+          </div>
+        </div>
+
+        {/* Main Grid: Desks vs Chat Transcript */}
+        <div className="classroom-grid-layout">
+          
+          {/* Left Side: Classroom seats & Events banner */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
+            
+            {/* Active Event Banner */}
+            <EventPopup event={activeEvent} />
+
+            {/* Virtual Blackboard Illustration Board */}
+            <Blackboard 
+              onShare={(desc) => handleSendTurn(`[Illustrated ${desc} on Blackboard]`, undefined, 'blackboard_share')}
+              subject={sessionDetails?.subject || ''}
+              topic={sessionDetails?.topic || ''}
+            />
+
+             {/* Student Grid */}
+            <div className="desks-grid glass">
+              {students.map((s) => (
+                <StudentCard
+                  key={s.name}
+                  student={s}
+                  emotion={studentEmotions[s.name] || 'normal'}
+                  isActiveSpeaker={activeSpeaker === s.name}
+                  bubbleText={
+                    activeSpeaker === s.name 
+                      ? activeSpeakerText 
+                      : (isPending && pendingStudent === s.name) 
+                        ? '...' 
+                        : null
+                  }
+                  onAction={handleStudentAction}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side: Chat Transcript Panel */}
+          <div className="chat-panel glass">
+            <div className="transcript-header">
+              📜 {t.recentTranscript}
+            </div>
+            
+            <div className="transcript-body">
+              {messages.map((m, idx) => {
+                const isAction = m.message_text.startsWith('[') && m.message_text.endsWith(']');
+                return (
+                  <div 
+                    key={idx} 
+                    className={`chat-bubble ${m.sender_type} ${isAction ? 'action' : ''}`}
+                    id={`chat-bubble-${idx}`}
+                  >
+                    {m.sender_type !== 'system' && !isAction && (
+                      <div className="chat-name">
+                        {m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}
+                      </div>
+                    )}
+                    <div>{m.message_text}</div>
+                  </div>
+                );
+              })}
+              
+              {isPending && (
+                <div className="chat-bubble student" style={{ fontStyle: 'italic', opacity: 0.6 }}>
+                  ✍️ Student responding...
                 </div>
-              );
-            })}
-            
-            {isPending && (
-              <div className="chat-bubble student" style={{ fontStyle: 'italic', opacity: 0.6 }}>
-                ✍️ Student responding...
-              </div>
-            )}
-            
-            <div ref={chatEndRef} />
+              )}
+              
+              <div ref={chatEndRef} />
+            </div>
           </div>
-        </div>
 
+        </div>
       </div>
 
       {/* Floating Action Dock centered at bottom center */}
@@ -511,6 +514,8 @@ export const Classroom: React.FC<ClassroomProps> = ({
             className="text-input-field"
             value={teacherInput}
             onChange={(e) => setTeacherInput(e.target.value)}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
             placeholder={isListening ? t.micListening : t.typePlaceholder}
             disabled={isPending}
             id="classroom-input-text"

@@ -552,6 +552,8 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
     ctx.fillStyle = chalkboardColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
@@ -601,6 +603,8 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = isEraser ? chalkboardColor : penColor;
+    ctx.shadowColor = isEraser ? 'transparent' : penColor;
+    ctx.shadowBlur = isEraser ? 0 : 8;
 
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -627,6 +631,8 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = '11px monospace';
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
 
     const w = canvas.width;
     const h = canvas.height;
@@ -2108,8 +2114,8 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
             position: 'relative',
             borderRadius: '8px', 
             overflow: 'hidden', 
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            border: 'none',
+            boxShadow: 'none',
             width: '100%',
             height: '192px'
           }}
