@@ -1,13 +1,20 @@
 import os
+import sys
+
+# Dynamically add the backend directory to sys.path to support imports from both root and subdirectories
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 import random
 from typing import List, Optional
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .database import engine, get_db, Base
-from .models import ClassroomSession, SessionMessage, SessionAnalytics
-from .schemas import (
+from database import engine, get_db, Base
+from models import ClassroomSession, SessionMessage, SessionAnalytics
+from schemas import (
     ClassroomSessionCreate,
     ClassroomSessionOut,
     SessionMessageCreate,
@@ -16,8 +23,8 @@ from .schemas import (
     SessionAnalyticsOut,
     TeacherTurnInput,
 )
-from .simulation import STUDENTS, CLASSROOM_EVENTS, select_responding_student, trigger_random_event
-from .ai import generate_student_reply, generate_evaluation
+from simulation import STUDENTS, CLASSROOM_EVENTS, select_responding_student, trigger_random_event
+from ai import generate_student_reply, generate_evaluation
 
 # Initialize SQLite database tables
 Base.metadata.create_all(bind=engine)
