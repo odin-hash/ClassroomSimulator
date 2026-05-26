@@ -425,17 +425,17 @@ async def generate_student_reply(
             INSTRUCTIONS:
             1. Generate a realistic student response.
             2. Be highly concise: keep responses short and natural (1-3 sentences maximum).
-            3. Act strictly according to the student's Grade Level ({class_level}) and personality:
-               - Shy students respond quietly, briefly, and sometimes nervously.
-               - Curious students ask insightful but age-appropriate questions related to {topic}.
-               - Distracted students are off-task or easily distracted.
-               - Hyperactive students are enthusiastically speaking out of turn.
-               - Weak learners express confusion, or ask for simple analogies of {topic}.
-               - Overconfident students blurt out quick, oversimplified, or slightly incorrect answers.
+            3. Act strictly according to the student's specific character, personality, and active Grade Level ({class_level}):
+               - Aarav (Curious student): Engaged, inquisitive, asks deep, thoughtful questions connecting {topic} to other things. Sounds genuinely excited to learn.
+               - Ananya (Shy student): Extremely quiet, soft-spoken, and anxious. Speaks briefly, using hesitant pauses ("Umm...", "Uh...", "...sorry"), nods quietly, or mentions that she was taking notes. Never blurts out answers or raises her voice.
+               - Vihaan (Distracted student): Off-task, daydreaming, or looking out the window. Talks about unrelated things like toys, video games, lunch time, or a bird outside. Often asks the teacher to repeat the question because he wasn't listening.
+               - Ishaan (Hyperactive student): Bursting with energy, hyperactive, speaks out of turn. Uses exclamation marks, childish excitement, blurts out random facts, suggests making live explosions/experiments, or tells fast, unrelated personal stories.
+               - Riya (Weak learner): Struggles to grasp complex concepts, has low academic confidence. Easily confused by big academic words. Asks for simple, concrete real-world examples or analogies (e.g. sharing blocks, apples, water), and frequently gets things mixed up or asks the teacher to slow down.
+               - Kabir (Overconfident student): Bold, cocky, and boastful. Claims everything is "super easy", "common sense", or that he already knows it all. Frequently blurts out answers with absolute 100% certainty, though his answers are often oversimplified, slightly inaccurate, or missing the point.
             4. GRADE LEVEL INTELLIGENCE GUIDELINES (Crucial):
-               - Primary (Grades 1-5): Act like young children (6-10 years old). Use extremely simple, colloquial words, very short sentences, concrete visual analogies (like apples, toys, blocks, sky), and express excitement or confusion in a very childish, simple way. They do NOT know complex formulas, variables, high-level academic jargon, or university-level terms.
-               - Middle School (Grades 6-8): Act like young teenagers (11-14 years old). Have basic academic knowledge (know simple equations, basic biology/history facts, decimals), but get confused by highly advanced technical details. Use moderate vocabulary.
-               - High School (Grades 9-12): Act like mature teenagers (15-18 years old). Use sophisticated academic terms, formulate logical arguments, and get overconfident with actual formulas and technical parameters. They are preparing for college.
+               - Primary (Grades 1-5): Act like young children (6-10 years old). Use extremely simple, colloquial words, very short sentences, and concrete visual analogies (like fruits, toys, shapes, skies, birds). They do NOT know complex formulas, variables, high-level academic jargon, or advanced vocabulary. If the teacher uses big or advanced academic words (e.g. "photosynthesis", "mechanisms", "principles", "phenomenon", "coefficient"), the student MUST act confused by the "big words" (e.g. "Teacher, what does that big word mean?", "I don't understand that big word, can you use a story?").
+               - Middle School (Grades 6-8): Act like young teenagers (11-14 years old). Have basic academic knowledge (know simple equations, basic biology/history facts, decimals), but get confused by highly advanced technical details or university-level jargon. Use moderate, typical middle-school vocabulary.
+               - High School (Grades 9-12): Act like mature teenagers (15-18 years old). Use sophisticated academic terms, formulate logical arguments, and get overconfident with actual formulas, technical parameters, and college prep mindset.
             5. If the teacher asked a direct question, make the student answer according to their academic level.
             6. Respond in the exact language script requested (Devanagari for Hindi, Bengali script for Bengali, English letters for English).
 
@@ -520,6 +520,22 @@ async def generate_evaluation(
                 if name.lower() in msg['message_text'].lower():
                     addressed_students.add(name)
 
+    # If the session is extremely short (e.g. under 3 teacher turns), it is likely just an introductory greeting or quick test.
+    # We return encouraging high scores and a supportive introduction message instead of penalizing them.
+    if teacher_turns < 3:
+        return {
+            "communication_score": 90,
+            "engagement_score": 90,
+            "time_management_score": 90,
+            "question_handling_score": 90,
+            "suggestions": (
+                "### Great Start!\n"
+                "This was a quick introductory greeting. You welcomed the class warmly, which is an excellent pedagogical habit! "
+                "To receive a detailed, in-depth B.Ed pedagogical appraisal, please continue the lesson by introducing your topic, explaining key concepts, and interacting with different students (Aarav, Ananya, Vihaan, Ishaan, Riya, Kabir) for a few more turns."
+            ),
+            "transcript_summary": f"Introductory welcome for {subject} class on {topic}. The teacher established a warm, positive rapport with the students."
+        }
+
     if HAS_API_KEY:
         try:
             prompt = f"""
@@ -537,7 +553,7 @@ async def generate_evaluation(
             {transcript_str}
 
             Please evaluate the trainee teacher's performance. Grade them out of 100 on the following metrics:
-            1. Communication Score: Assess clarity of explanations, language appropriateness, tone, and pronunciation helpers.
+            1. Communication & Grade Appropriateness Score: Assess clarity of explanations, tone, and language suitability for the active Grade Level ({class_level}). CRITICAL: If the Grade Level is "Primary (Grades 1-5)", did the teacher explain concepts using extremely simple, concrete analogies, and avoid high-level jargon? Deduct significant points if they used overly complex terms or university-level jargon for young kids, and detail this in the suggestions.
             2. Engagement Score: How active were they in addressing different students? Did they call on shy students (Ananya), manage distracted students (Vihaan) and hyperactive interruptions (Ishaan)?
             3. Time Management Score: Did they cover the objectives, keep explanation brief versus student interaction, and respect session limits?
             4. Question Handling Score: Did they answer Aarav's deep queries? Were they patient and supportive with Riya (weak learner)? Did they constructively guide Kabir (overconfident student)?
@@ -561,6 +577,27 @@ async def generate_evaluation(
         except Exception as e:
             print(f"Gemini API evaluation error: {e}")
             # fall through to fallback
+
+    # If the session is extremely short (e.g. under 3 teacher turns), it is likely just an introductory greeting or quick test.
+    # We should return welcoming, encouraging high scores and a supportive introduction message instead of penalizing them.
+    if teacher_turns < 3:
+        comm_score = 90
+        eng_score = 90
+        time_score = 90
+        question_score = 90
+        suggestions_text = (
+            "### Great Start!\n"
+            "This was a quick introductory greeting. You welcomed the class warmly, which is an excellent pedagogical habit! "
+            "To receive a detailed B.Ed pedagogical appraisal, please continue the lesson by introducing the topic, explaining key concepts, and interacting with different students (Aarav, Ananya, Vihaan, Ishaan, Riya, Kabir) for a few more turns."
+        )
+        return {
+            "communication_score": int(comm_score),
+            "engagement_score": int(eng_score),
+            "time_management_score": int(time_score),
+            "question_handling_score": int(question_score),
+            "suggestions": suggestions_text,
+            "transcript_summary": f"Introductory welcome for {subject} class on {topic}. The teacher established a warm, positive rapport with the students."
+        }
 
     # Rule-based fallback evaluator
     # Simple heuristics to generate credible-looking scores
