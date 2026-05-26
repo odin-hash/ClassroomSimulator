@@ -565,7 +565,7 @@ async def transcribe_speech(file: UploadFile = File(...)):
                         "parts": [
                             {
                                 "inline_data": {
-                                    "mime_type": "audio/webm",
+                                    "mime_type": file.content_type or "audio/webm",
                                     "data": audio_b64
                                 }
                             },

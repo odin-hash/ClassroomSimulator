@@ -785,13 +785,14 @@ export const Classroom: React.FC<ClassroomProps> = ({
   };
 
   // Upload recorded speech blob to transcribe endpoint
-  const uploadAndTranscribe = async (audioBlob: Blob) => {
+  const uploadAndTranscribe = async (audioBlob: Blob, mimeType: string = 'audio/webm') => {
     try {
       setIsPending(true);
       const formData = new FormData();
-      formData.append('file', audioBlob, 'speech.webm');
+      const fileExtension = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+      formData.append('file', audioBlob, `speech.${fileExtension}`);
 
-      console.info("[STT] Uploading recorded speech to /api/transcribe...");
+      console.info(`[STT] Uploading recorded speech (${mimeType}) to /api/transcribe...`);
       const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
         method: 'POST',
         body: formData,
@@ -862,7 +863,16 @@ export const Classroom: React.FC<ClassroomProps> = ({
             console.log("[VAD] Speech started (rms=" + rms.toFixed(4) + "), starting recording.");
             audioChunksRef.current = [];
 
-            const mediaRecorder = new MediaRecorder(mediaStreamRef.current!);
+            let options: MediaRecorderOptions = {};
+            if (MediaRecorder.isTypeSupported('audio/webm')) {
+              options = { mimeType: 'audio/webm' };
+            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+              options = { mimeType: 'audio/mp4' };
+            } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+              options = { mimeType: 'audio/ogg' };
+            }
+
+            const mediaRecorder = new MediaRecorder(mediaStreamRef.current!, options);
             mediaRecorderRef.current = mediaRecorder;
 
             mediaRecorder.ondataavailable = (event) => {
@@ -875,10 +885,11 @@ export const Classroom: React.FC<ClassroomProps> = ({
               console.log("[VAD] MediaRecorder stopped. Chunks:", audioChunksRef.current.length);
               if (audioChunksRef.current.length === 0) return;
               
-              const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+              const recordedType = mediaRecorder.mimeType || 'audio/webm';
+              const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
               audioChunksRef.current = [];
               
-              await uploadAndTranscribe(audioBlob);
+              await uploadAndTranscribe(audioBlob, recordedType);
             };
 
             try {
