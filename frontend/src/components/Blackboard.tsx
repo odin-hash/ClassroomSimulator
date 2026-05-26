@@ -2170,17 +2170,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
       {/* Chalkboard Canvas & Floating Toolbar (Visible only when expanded) */}
       {isExpanded && (
-        <div 
-          style={{ 
-            position: 'relative',
-            borderRadius: '8px', 
-            overflow: 'hidden', 
-            border: 'none',
-            boxShadow: 'none',
-            width: '100%',
-            height: '450px'
-          }}
-        >
+        <div className="blackboard-canvas-container">
           <canvas
             ref={canvasRef}
             width={1000}
@@ -2196,19 +2186,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
           />
 
           {/* Centered Floating Toolbar Pill Menu */}
-          <div 
-            className="blackboard-controls-dock"
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 10,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-            }}
-          >
+          <div className="blackboard-controls-dock">
             {/* Chalk Color Palette */}
             <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
               {['#0f172a', '#2563eb', '#ef4444', '#0d9488'].map((c) => (
