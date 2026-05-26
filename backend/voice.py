@@ -67,13 +67,13 @@ VOICE_MODELS = {
     "kabir": { # Hyperactive, fast speaking, excited
         "model_name": "en_US-arctic-medium",
         "relative_url": "en/en_US/arctic/medium/en_US-arctic-medium",
-        "speed": 1.25, # fast and enthusiastic
+        "speed": 1.08, # fast and enthusiastic
         "pitch": 1.15  # higher-pitched excited tone
     },
     "riya_oc": { # Overconfident, confident, speaks quickly
         "model_name": "en_US-kelsey-medium",
         "relative_url": "en/en_US/kelsey/medium/en_US-kelsey-medium",
-        "speed": 1.18, # confident and quick speaking
+        "speed": 1.04, # confident and quick speaking
         "pitch": 1.0
     }
 }

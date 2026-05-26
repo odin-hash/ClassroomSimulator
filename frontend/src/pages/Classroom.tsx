@@ -460,7 +460,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
         break;
       case 'Ishaan': // Hyperactive (Kabir role: fast speaking, excited)
         pitch = 1.15;
-        rate = 1.25;
+        rate = 1.08;
         break;
       case 'Riya': // Weak Learner (Neha role: slower, hesitant)
         pitch = 1.18;
@@ -468,7 +468,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
         break;
       case 'Kabir': // Overconfident (Riya role: confident, quick speaking)
         pitch = 0.95;
-        rate = 1.18;
+        rate = 1.04;
         break;
       default:
         pitch = 1.0;
