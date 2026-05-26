@@ -109,6 +109,7 @@ CLASSROOM_EVENTS = [
 def select_responding_student(teacher_input: str, addressed_student: Optional[str] = None) -> Dict[str, Any]:
     """
     Selects which student should respond to the teacher's input.
+    Supports both UI names and custom task-requested names.
     """
     # 1. If a student is explicitly addressed, select them
     if addressed_student:
@@ -117,17 +118,31 @@ def select_responding_student(teacher_input: str, addressed_student: Optional[st
                 return s
 
     # 2. Check keywords in teacher's input to find if they mentioned any student name
+    input_lower = teacher_input.lower()
     for s in STUDENTS:
-        if s["name"].lower() in teacher_input.lower():
+        if s["name"].lower() in input_lower:
             return s
 
-    # 3. Else, look for general triggers
+    # 3. Add custom mapping for newly requested task names
+    task_mappings = {
+        "arjun": "Aarav",
+        "priya": "Ananya",
+        "rahul": "Vihaan",
+        "neha": "Riya",
+    }
+    for key, target_name in task_mappings.items():
+        if key in input_lower:
+            for s in STUDENTS:
+                if s["name"] == target_name:
+                    return s
+
+    # 4. Else, look for general triggers
     # If it's a question (ends with '?'), choose between Kabir (overconfident), Ishaan (hyperactive), or Aarav (curious)
-    if teacher_input.strip().endswith("?") or "what" in teacher_input.lower() or "how" in teacher_input.lower() or "why" in teacher_input.lower():
+    if teacher_input.strip().endswith("?") or "what" in input_lower or "how" in input_lower or "why" in input_lower:
         choices = [s for s in STUDENTS if s["name"] in ["Kabir", "Ishaan", "Aarav", "Riya"]]
         return random.choice(choices)
 
-    # 4. Otherwise, pick a random student
+    # 5. Otherwise, pick a random student
     return random.choice(STUDENTS)
 
 
