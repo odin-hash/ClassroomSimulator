@@ -130,29 +130,52 @@ def build_topic_aware_response(
     personality: str,
     subject: str,
     topic: str,
+    class_level: str,
     language: str,
     teacher_message: str
 ) -> str:
     """
     Generates highly accurate, topic-informed student responses for fallback mode.
-    Injects subject-matter keywords and aligns with student personalities.
+    Injects subject-matter keywords aligned with selected Grade Level intelligence.
     """
     t_clean = topic.strip()
     s_clean = subject.strip()
     
-    # Simple subject keyword injector to add academic realism
+    # Grade-adjusted keyword and concept injection to reflect student academic intelligence
+    grade_lower = class_level.lower()
     sub_lower = s_clean.lower()
     keyword = ""
-    if "math" in sub_lower or "algebra" in sub_lower or "geometry" in sub_lower:
-        keyword = random.choice(["formulas", "equations", "variables", "calculations", "values"])
-    elif "science" in sub_lower or "physic" in sub_lower or "chemistry" in sub_lower or "biology" in sub_lower:
-        keyword = random.choice(["cells", "atoms", "reaction", "gravity", "energy", "experiments"])
-    elif "history" in sub_lower or "social" in sub_lower:
-        keyword = random.choice(["timelines", "civilizations", "empires", "centuries", "historical maps"])
-    elif "lang" in sub_lower or "english" in sub_lower or "hindi" in sub_lower or "bengali" in sub_lower:
-        keyword = random.choice(["grammar structure", "pronunciation", "sentence builders", "vocabulary", "literature"])
+    
+    if "primary" in grade_lower or "1-5" in grade_lower:
+        # Extremely simple, concrete visual keywords for young kids (Grades 1-5)
+        if "math" in sub_lower:
+            keyword = random.choice(["counting", "shapes", "adding numbers", "sharing blocks"])
+        elif "science" in sub_lower:
+            keyword = random.choice(["plants", "bugs", "water", "sunlight", "sky", "animals"])
+        elif "history" in sub_lower or "social" in sub_lower:
+            keyword = random.choice(["kings", "old stories", "old maps", "family trees"])
+        else:
+            keyword = random.choice(["easy words", "pictures", "stories"])
+    elif "middle" in grade_lower or "6-8" in grade_lower:
+        # Moderate complexity for pre-teens (Grades 6-8)
+        if "math" in sub_lower:
+            keyword = random.choice(["fractions", "simple equations", "decimals", "ratios"])
+        elif "science" in sub_lower:
+            keyword = random.choice(["cells", "gravity", "energy", "basic experiments", "ecosystems"])
+        elif "history" in sub_lower or "social" in sub_lower:
+            keyword = random.choice(["timelines", "civilizations", "empires", "centuries"])
+        else:
+            keyword = random.choice(["grammar rules", "vocabulary list", "sentence structures"])
     else:
-        keyword = random.choice(["basic concepts", "core methods", "practical models"])
+        # High School - Advanced technical/academic terms (Grades 9-12)
+        if "math" in sub_lower:
+            keyword = random.choice(["algebraic variables", "coordinate scaling", "functions", "formulas"])
+        elif "science" in sub_lower:
+            keyword = random.choice(["chemical reactions", "molecular bonds", "gravitational force", "cellular mitosis"])
+        elif "history" in sub_lower or "social" in sub_lower:
+            keyword = random.choice(["geopolitical borders", "socio-economic impacts", "constitutional laws", "historical analysis"])
+        else:
+            keyword = random.choice(["literary devices", "syntactical structures", "drama plots", "rhyme schemes"])
 
     # Template mappings
     if language == "Hindi":
@@ -266,8 +289,18 @@ def build_topic_aware_response(
                 f"I already know all about {t_clean}! It's basically just common sense in {s_clean}, right? We don't even need to write it down.",
                 f"The explanation for {t_clean} is simple: it works because of magnetism and {keyword}. I'm 100% sure that's correct!"
             ]
+    base_reply = random.choice(templates)
+    
+    # If primary grade level (Grades 1-5), simplify complex/academic vocabulary words for young kids
+    if "primary" in grade_lower or "1-5" in grade_lower:
+        if language == "Hindi":
+            base_reply = base_reply.replace("महत्वपूर्ण", "ज़रूरी").replace("अवधारणा", "बात").replace("सिद्धांतों", "बातों").replace("सिद्धांत", "बात")
+        elif language == "Bengali":
+            base_reply = base_reply.replace("তত্ত্ব", "সহজ কথা").replace("ধারণাটি", "বিষয়টি").replace("প্রয়োগ", "ব্যবহার").replace("তত্ত্বটি", "সহজ কথা")
+        else: # English simplifications
+            base_reply = base_reply.replace("fascinating", "cool").replace("phenomenon", "thing").replace("correlation", "connection").replace("application", "use").replace("context", "lesson").replace("factors", "things")
             
-    return random.choice(templates)
+    return base_reply
 
 
 async def generate_student_reply(
@@ -399,8 +432,12 @@ async def generate_student_reply(
                - Hyperactive students are enthusiastically speaking out of turn.
                - Weak learners express confusion, or ask for simple analogies of {topic}.
                - Overconfident students blurt out quick, oversimplified, or slightly incorrect answers.
-            4. If the teacher asked a direct question, make the student answer according to their academic level.
-            5. Respond in the exact language script requested (Devanagari for Hindi, Bengali script for Bengali, English letters for English).
+            4. GRADE LEVEL INTELLIGENCE GUIDELINES (Crucial):
+               - Primary (Grades 1-5): Act like young children (6-10 years old). Use extremely simple, colloquial words, very short sentences, concrete visual analogies (like apples, toys, blocks, sky), and express excitement or confusion in a very childish, simple way. They do NOT know complex formulas, variables, high-level academic jargon, or university-level terms.
+               - Middle School (Grades 6-8): Act like young teenagers (11-14 years old). Have basic academic knowledge (know simple equations, basic biology/history facts, decimals), but get confused by highly advanced technical details. Use moderate vocabulary.
+               - High School (Grades 9-12): Act like mature teenagers (15-18 years old). Use sophisticated academic terms, formulate logical arguments, and get overconfident with actual formulas and technical parameters. They are preparing for college.
+            5. If the teacher asked a direct question, make the student answer according to their academic level.
+            6. Respond in the exact language script requested (Devanagari for Hindi, Bengali script for Bengali, English letters for English).
 
             Choose a suitable visual emotion status for the student:
             - 'normal'
@@ -432,6 +469,7 @@ async def generate_student_reply(
         personality=student_personality,
         subject=subject,
         topic=topic,
+        class_level=class_level,
         language=language,
         teacher_message=teacher_message
     )
