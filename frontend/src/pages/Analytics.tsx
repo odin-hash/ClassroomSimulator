@@ -130,7 +130,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({
       <div className="analytics-banner glass">
         <div>
           <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase' }}>
-            B.Ed Micro-Teaching Evaluation Report
+            Micro-Teaching Evaluation Report
           </span>
           <h1 className="gradient-text" style={{ fontSize: '2rem', fontWeight: 700 }}>
             {sessionDetails?.subject}: {sessionDetails?.topic}
@@ -151,7 +151,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({
             className="btn-primary" 
             onClick={onBackToDashboard}
             id="analytics-btn-back"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" x2="5" y1="12" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
             {t.backBtn}
           </button>
         </div>
@@ -233,8 +235,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({
 
         {/* Right: Transcript Explorer */}
         <div className="suggestions-card glass" style={{ display: 'flex', flexDirection: 'column', maxHeight: '650px' }}>
-          <h3 className="gradient-text" style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            💬 {t.recentTranscript}
+          <h3 className="gradient-text" style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {t.recentTranscript}
           </h3>
           
           <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

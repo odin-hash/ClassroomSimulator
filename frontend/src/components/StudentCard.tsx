@@ -82,39 +82,43 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           {emotion === 'distracted' && (
             <button 
               className="btn-primary" 
-              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-warning)', border: 'none' }}
+              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-warning)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onClick={() => onAction(student.name, 'focus')}
             >
-              ⚠️ Remind
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+              Remind
             </button>
           )}
           
           {emotion === 'sleeping' && (
             <button 
               className="btn-primary" 
-              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-info)', border: 'none' }}
+              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-info)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onClick={() => onAction(student.name, 're-engage')}
             >
-              💡 Wake Up
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+              Wake Up
             </button>
           )}
 
           {emotion === 'confused' && (
             <button 
               className="btn-primary" 
-              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-danger)', border: 'none' }}
+              style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', background: 'var(--color-danger)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onClick={() => onAction(student.name, 'explain_basic')}
             >
-              📖 Scaffold
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              Scaffold
             </button>
           )}
           
           <button 
             className="btn-secondary" 
-            style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', border: '1px solid var(--border-card)', background: 'var(--bg-secondary)' }}
+            style={{ width: '100%', padding: '0.35rem', fontSize: '0.7rem', border: '1px solid var(--border-card)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={() => onAction(student.name, 'prompt')}
           >
-            ❓ Call On
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            Call On
           </button>
         </div>
       </div>

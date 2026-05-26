@@ -181,7 +181,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {Object.keys(SYLLABUS).map((sub) => (
                 <option key={sub} value={sub}>{sub}</option>
               ))}
-              <option value="Custom">✏️ Custom Subject (Type below)</option>
+              <option value="Custom">Custom Subject (Type below)</option>
             </select>
           </div>
 
@@ -227,7 +227,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {getTopicsOptions().map((top) => (
                 <option key={top} value={top}>{top}</option>
               ))}
-              <option value="Custom">✏️ Custom Topic (Type below)</option>
+              <option value="Custom">Custom Topic (Type below)</option>
             </select>
           </div>
 
@@ -300,7 +300,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </select>
           </div>
 
-          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} id="dashboard-btn-submit">
+          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} id="dashboard-btn-submit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             {t.startBtn}
           </button>
         </form>
@@ -328,7 +329,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             height: '100%',
             justifyContent: 'center'
           }}>
-            <span style={{ fontSize: '3rem' }}>🏫</span>
+            <span style={{ display: 'inline-flex', color: 'var(--text-muted)' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-10 9h3v8h14v-8h3L12 3z"/><path d="M12 18H12.01"/></svg>
+            </span>
             <p>{t.noHistory}</p>
           </div>
         ) : (
@@ -349,8 +352,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </span>
                   <span className="history-meta">{formatDate(session.created_at)}</span>
                 </div>
-                <div className="score-badge" title="View details">
-                  📋 Details
+                <div className="score-badge" title="View details" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.9rem' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                  Details
                 </div>
               </div>
             ))}

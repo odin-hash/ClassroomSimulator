@@ -10,7 +10,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [penColor, setPenColor] = useState('#0f172a'); // Chalk white
-  const [penSize, setPenSize] = useState(3);
+  const [penSize, setPenSize] = useState(2);
   const [isEraser, setIsEraser] = useState(false);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -578,8 +578,10 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -594,15 +596,17 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
-    ctx.lineWidth = penSize;
+    ctx.lineWidth = isEraser ? 24 : penSize;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = isEraser ? chalkboardColor : penColor;
-    ctx.shadowColor = isEraser ? 'transparent' : penColor;
-    ctx.shadowBlur = isEraser ? 0 : 8;
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
 
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -1314,10 +1318,10 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
     } else if (preset === 'comp-paint') {
       ctx.strokeRect(40, 60, 80, 95);
-      ctx.fillText('✏️ Pencil', 50, 80);
-      ctx.fillText('🎨 Brush', 50, 100);
-      ctx.fillText('🪣 Fill', 50, 120);
-      ctx.fillText('🧽 Eraser', 50, 140);
+      ctx.fillText('Pencil', 50, 80);
+      ctx.fillText('Brush', 50, 100);
+      ctx.fillText('Fill', 50, 120);
+      ctx.fillText('Eraser', 50, 140);
       ctx.strokeRect(140, 60, w - 180, 95);
       ctx.fillText('(Paint Canvas Drawing Area)', 180, 110);
       ctx.fillText('Creative Drawing in MS Paint Tools', 15, 20);
@@ -1333,7 +1337,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
     } else if (preset === 'comp-scratch') {
       ctx.strokeRect(50, 45, 200, 110);
-      ctx.fillText('when green flag clicked 🏁', 60, 65);
+      ctx.fillText('when green flag clicked', 60, 65);
       ctx.strokeRect(60, 75, 160, 25); ctx.fillText('move (10) steps', 70, 92);
       ctx.strokeRect(60, 105, 160, 25); ctx.fillText('say [Hello!] for (2) secs', 70, 122);
       ctx.fillText('Visual Coding Block-Programming in Scratch', 15, 20);
@@ -1492,9 +1496,9 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
     } else if (preset === 'sci-recycle') {
       ctx.fillText('Classroom Environmental Waste Sorting Bins:', 30, 45);
-      ctx.strokeRect(50, 70, 80, 70); ctx.fillText('PAPER 📰', 60, 110);
-      ctx.strokeRect(170, 70, 80, 70); ctx.fillText('PLASTIC 🪚', 174, 110);
-      ctx.strokeRect(290, 70, 80, 70); ctx.fillText('GLASS 🫙', 300, 110);
+      ctx.strokeRect(50, 70, 80, 70); ctx.fillText('PAPER', 72, 110);
+      ctx.strokeRect(170, 70, 80, 70); ctx.fillText('PLASTIC', 186, 110);
+      ctx.strokeRect(290, 70, 80, 70); ctx.fillText('GLASS', 312, 110);
       ctx.fillText('Reduce, Reuse, Recycle Waste Management', 15, 20);
 
     } else if (preset === 'sci-dna') {
@@ -1758,9 +1762,9 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
     } else if (preset === 'pol-helpers') {
       ctx.fillText('Civics: Community Helpers roles in neighborhoods:', 30, 45);
-      ctx.strokeRect(50, 70, 100, 50); ctx.fillText('👮 Police', 65, 100);
-      ctx.strokeRect(180, 70, 100, 50); ctx.fillText('🧑‍⚕️ Doctor', 195, 100);
-      ctx.strokeRect(310, 70, 100, 50); ctx.fillText('👩‍🚒 Firefighter', 320, 100);
+      ctx.strokeRect(50, 70, 100, 50); ctx.fillText('Police', 82, 100);
+      ctx.strokeRect(180, 70, 100, 50); ctx.fillText('Doctor', 212, 100);
+      ctx.strokeRect(310, 70, 100, 50); ctx.fillText('Firefighter', 328, 100);
       ctx.fillText('Community Helpers: Essential Public Duties', 15, 20);
 
     } else if (preset === 'pol-panchayat') {
@@ -2067,14 +2071,19 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="btn-icon"
-            style={{ fontSize: '1rem', padding: '0.25rem', width: '24px', height: '24px' }}
+            style={{ fontSize: '1rem', padding: '0.25rem', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title={isExpanded ? "Collapse Board" : "Expand Board"}
             type="button"
           >
-            {isExpanded ? '🔽' : '▶️'}
+            {isExpanded ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            )}
           </button>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-cyan)' }}>
-            🖍️ Chalkboard ({categoryName})
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 9H3"/><path d="M21 15H3"/><path d="M12 3v18"/></svg>
+            Whiteboard ({categoryName})
           </span>
         </div>
         
@@ -2115,13 +2124,13 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
             border: 'none',
             boxShadow: 'none',
             width: '100%',
-            height: '192px'
+            height: '450px'
           }}
         >
           <canvas
             ref={canvasRef}
-            width={650}
-            height={192}
+            width={1000}
+            height={450}
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
@@ -2171,7 +2180,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
             {/* Brush Sizes */}
             <div style={{ display: 'flex', gap: '0.2rem', alignItems: 'center' }}>
-              {[2, 5, 8].map((s) => (
+              {[2, 5, 10].map((s) => (
                 <button
                   key={s}
                   onClick={() => setPenSize(s)}
@@ -2180,7 +2189,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
                     fontSize: '0.65rem',
                     borderRadius: '4px',
                     background: penSize === s ? 'var(--primary)' : 'transparent',
-                    color: 'var(--text-primary)',
+                    color: penSize === s ? '#ffffff' : 'var(--text-primary)',
                     border: 'none',
                     cursor: 'pointer'
                   }}
@@ -2204,11 +2213,18 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
                   border: 'none',
                   background: isEraser ? 'var(--primary-glow)' : 'transparent',
                   color: isEraser ? 'var(--primary)' : 'var(--text-primary)',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
                 }}
                 type="button"
               >
-                🧽 Eraser
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l4.3 4.3c1 1 1 2.5 0 3.4l-9.6 9.6z"/>
+                  <path d="m22 21-6V15"/>
+                </svg>
+                <span>Eraser</span>
               </button>
               <button
                 onClick={clearBoard}
@@ -2219,11 +2235,19 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
                   border: 'none',
                   background: 'transparent',
                   color: 'var(--text-primary)',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
                 }}
                 type="button"
               >
-                🧹 Clear
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18"/>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                </svg>
+                <span>Clear</span>
               </button>
             </div>
 
@@ -2233,11 +2257,25 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
             <button
               onClick={handleShareClick}
               className="btn-primary"
-              style={{ padding: '0.2rem 0.6rem', fontSize: '0.65rem', borderRadius: '4px' }}
+              style={{ 
+                padding: '0.2rem 0.6rem', 
+                fontSize: '0.65rem', 
+                borderRadius: '4px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
               id="blackboard-btn-share"
               type="button"
             >
-              📤 Share
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"/>
+                <circle cx="6" cy="12" r="3"/>
+                <circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/>
+                <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>
+              </svg>
+              <span>Share</span>
             </button>
           </div>
         </div>

@@ -65,6 +65,9 @@ body {
   overflow-x: hidden;
   position: relative;
   transition: background-color var(--transition-speed), color var(--transition-speed);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* SaaS Card and Glass Overrides */
@@ -75,6 +78,17 @@ body {
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-card);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+.saas-card:focus,
+.glass:focus,
+.saas-card:active,
+.glass:active,
+.saas-card:focus-visible,
+.glass:focus-visible {
+  outline: none !important;
+  box-shadow: var(--card-shadow);
 }
 
 [data-theme="dark"] .saas-card,
@@ -345,6 +359,10 @@ body {
   background-color: var(--bg-primary);
 }
 
+.classroom-container:has(.left-nav-rail:hover) {
+  padding-left: 260px;
+}
+
 .classroom-header {
   height: 64px;
   background: var(--bg-secondary);
@@ -384,11 +402,21 @@ body {
   grid-template-rows: repeat(2, 1fr);
   gap: 1.5rem;
   padding: 1.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-card);
-  border-radius: 20px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0;
+  box-shadow: none !important;
   align-items: center;
   justify-items: center;
+  outline: none !important;
+}
+
+.desks-grid:focus,
+.desks-grid:active,
+.desks-grid:focus-within {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Student Desk Card */
@@ -406,6 +434,16 @@ body {
   border: 1px solid var(--border-card);
   box-shadow: var(--card-shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.student-desk:focus,
+.student-desk:active,
+.student-desk:focus-within,
+.student-desk:focus-visible {
+  outline: none !important;
+  border-color: var(--border-card) !important;
 }
 
 .student-desk.focused,
@@ -413,12 +451,13 @@ body {
 .student-desk.sleeping {
   border-color: var(--border-card);
   box-shadow: var(--card-shadow);
+  outline: none !important;
 }
 
 .student-desk.active-speaker {
-  border-color: var(--text-primary) !important;
-  border-width: 2px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #2563eb !important;
+  border-width: 1px;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15), var(--card-shadow);
 }
 
 .student-avatar-container {
@@ -440,7 +479,7 @@ body {
 }
 
 .student-avatar-wrapper.active-speaker-ring {
-  box-shadow: 0 0 0 3px var(--text-primary);
+  box-shadow: 0 0 0 3px #2563eb;
 }
 
 /* Student avatar styles */
@@ -1099,8 +1138,14 @@ body {
 }
 
 [data-theme="light"] .blackboard-presets-select {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a !important;
+}
+
+.blackboard-presets-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 .blackboard-controls-dock {
@@ -1148,7 +1193,7 @@ body {
 /* Sidebar navigation rail expansion states */
 
 .classroom-container.nav-expanded {
-  padding-left: 220px;
+  padding-left: 260px;
 }
 
 .classroom-container.chat-open {
@@ -1162,34 +1207,39 @@ body {
   border-right: 1px solid var(--border-card);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 1.5rem 0;
+  align-items: flex-start;
+  padding: 0 12px 1.5rem 12px;
   gap: 1rem;
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 100;
+  z-index: 1100;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .left-nav-rail.expanded {
-  width: 220px;
-  align-items: flex-start;
-  padding: 1.5rem;
+  width: 260px;
 }
 
 .nav-rail-logo {
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   margin-bottom: 2rem;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.75rem;
   font-weight: 800;
   color: var(--text-primary);
   text-decoration: none;
   width: 100%;
+  height: 64px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
 .nav-rail-logo span {
@@ -1199,14 +1249,17 @@ body {
 }
 
 .nav-rail-item {
-  width: 44px;
-  height: 44px;
+  width: 100%;
+  height: 50px;
   border-radius: 12px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
   cursor: pointer;
   color: var(--text-secondary);
+  padding: 0 14px;
+  box-sizing: border-box;
   transition: all 0.2s ease;
   background: transparent;
   border: none;
@@ -1217,7 +1270,7 @@ body {
   width: 100%;
   justify-content: flex-start;
   gap: 0.75rem;
-  padding: 0 0.75rem;
+  padding: 0 14px;
 }
 
 .nav-rail-item:hover {
@@ -1234,14 +1287,15 @@ body {
 }
 
 .nav-rail-label {
-  display: none;
+  display: none !important;
   font-family: var(--font-family);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
 }
 
+.left-nav-rail:hover .nav-rail-label,
 .left-nav-rail.expanded .nav-rail-label {
-  display: block;
+  display: block !important;
 }
 
 /* Segmented tab toggle */
@@ -1425,20 +1479,74 @@ body {
 
 /* Hover expand behaviors for Collapsed Left Navigation Rail */
 .left-nav-rail:hover {
-  width: 220px;
-  align-items: flex-start;
-  padding: 1.5rem;
+  width: 260px;
   box-shadow: 6px 0 30px rgba(0, 0, 0, 0.06);
 }
 
-.left-nav-rail:hover .nav-rail-item {
-  width: 100%;
-  justify-content: flex-start;
-  gap: 0.75rem;
-  padding: 0 0.75rem;
+.left-nav-rail:hover .nav-rail-item,
+.left-nav-rail.expanded .nav-rail-item {
+  width: 100% !important;
+  height: 50px !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;
 }
 
-.left-nav-rail:hover .nav-rail-label {
-  display: block;
+.left-nav-rail:hover .nav-rail-logo,
+.left-nav-rail.expanded .nav-rail-logo {
+  width: 100% !important;
+  height: 64px !important;
+  justify-content: flex-start !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;
+}
+
+@keyframes fadeInLabel {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.left-nav-rail:hover .nav-rail-label,
+.left-nav-rail.expanded .nav-rail-label {
+  display: block !important;
+  white-space: normal !important;
+  text-align: left;
+  line-height: 1.3;
+  flex: 1;
+  word-break: break-word;
+  opacity: 0;
+  animation: fadeInLabel 0.2s cubic-bezier(0.4, 0, 0.2, 1) 0.12s forwards;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+  backface-visibility: hidden;
+}
+
+/* Semi-transparent backdrop overlay when navigation rail is hovered */
+.classroom-container::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.25);
+  z-index: 1050;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.classroom-container:has(.left-nav-rail:hover)::after {
+  opacity: 1;
+  pointer-events: auto;
 }
 

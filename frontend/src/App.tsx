@@ -74,7 +74,9 @@ function App() {
           {/* Navbar Header */}
           <header className="navbar">
             <div className="nav-logo" onClick={handleBackToDashboard} style={{ cursor: 'pointer' }}>
-              <span style={{ fontSize: '1.75rem' }}>🏫</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-10 9h3v8h14v-8h3L12 3z"/><path d="M12 18H12.01"/></svg>
+              </span>
               <div>
                 <h1 style={{ fontSize: '1.25rem', fontWeight: 800, lineHeight: 1.1 }}>
                   {t.title}
