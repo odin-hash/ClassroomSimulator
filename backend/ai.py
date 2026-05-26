@@ -183,113 +183,113 @@ def build_topic_aware_response(
     if language == "Hindi":
         if personality == "Curious student":
             templates = [
-                f"शिक्षक, मैं {t_clean} के बारे में और पढ़ रहा था। यह {s_clean} के बाकी सिद्धांतों और {keyword} से कैसे संबंधित है?",
-                f"{t_clean} की यह अवधारणा वास्तव में बहुत दिलचस्प है! यदि हम इसमें {keyword} की परिस्थितियों को बदल दें तो क्या होगा?",
-                f"क्या हम {t_clean} के वास्तविक जीवन के उदाहरणों पर चर्चा कर सकते हैं? यह हमारे दैनिक जीवन को कैसे प्रभावित करता है?"
+                f"अरे वाह, यह तो बहुत बढ़िया है! लेकिन {t_clean} और {keyword} एक साथ कैसे काम करते हैं?",
+                f"मैंने कल ही {t_clean} के बारे में देखा था! क्या इसका मतलब है कि {keyword} भी इसमें है?",
+                f"लेकिन सर, अगर हम {keyword} को बदल दें तो {t_clean} का क्या होगा?"
             ]
         elif personality == "Shy student":
             templates = [
-                f"उम... जी सर, मुझे लगता है कि मैं {t_clean} समझ रही हूँ... (धीरे से सिर हिलाती है)",
-                f"मुझे लगता है कि {t_clean} का उत्तर {keyword} से जुड़ा होना चाहिए, पर मैं पूरी तरह सुनिश्चित नहीं हूँ... माफ़ कीजिएगा।",
-                f"... (अनन्या शांत है) जी, मैं सुन रही हूँ और {t_clean} के बारे में नोट्स लिख रही हूँ।"
+                f"उम... मुझे लगता है... शायद {keyword}...?",
+                f"सॉरी सर, मुझे पक्का नहीं पता... क्या यह {t_clean} के बारे में है?",
+                f"मैं... मैं बस {keyword} के बारे में लिख रही थी..."
             ]
         elif personality == "Distracted student":
             templates = [
-                f"ओह! माफ़ करना शिक्षक जी, आपने {t_clean} के बारे में क्या कहा? मैं बाहर एक सुंदर पक्षी देख रहा था...",
-                f"क्या आप {t_clean} वाला आखिरी हिस्सा दोहरा सकते हैं? मैं कॉपी में {keyword} के बारे में कुछ और लिख रहा था...",
-                f"शिक्षक जी, क्या {t_clean} का संबंध हमारे वीडियो गेम्स से भी है? वैसे, लंच ब्रेक कब होगा?"
+                f"अरे, क्या? सॉरी सर, मैं पेंसिल ढूँढ रहा था... आपने {t_clean} के बारे में क्या कहा?",
+                f"ओह, उम, {keyword}? सॉरी, मैं भूल गया हम किस पेज पर हैं...",
+                f"क्या हम अभी भी {t_clean} पढ़ रहे हैं? मुझे भूख लग रही है..."
             ]
         elif personality == "Hyperactive student":
             templates = [
-                f"सर! सर! {t_clean} तो बहुत मजेदार है! क्या हम {keyword} का उपयोग करके इसपर अभी एक लाइव प्रयोग कर सकते हैं? प्लीज!",
-                f"ओह, मुझे पता है! {t_clean} ठीक वैसा ही है जैसे जब हम किसी चीज़ को ऊपर फेंकते हैं और वह नीचे आती है, है ना?",
-                f"यह तो बहुत आसान है! मुझे {t_clean} पर कल देखा हुआ एक यूट्यूब वीडियो याद आ गया। क्या मैं इसके बारे में बताऊं?"
+                f"सर! सर! मुझे पता है! यह {keyword} जैसा है ना?! क्या हम इसपर कोई गेम खेल सकते हैं?!",
+                f"मुझे पता है, मुझे पता है! कल मैंने {t_clean} के बारे में एक वीडियो देखा था, बहुत मज़ेदार था!",
+                f"वाह सर, {t_clean} तो बहुत मस्त है! क्या हम {keyword} का चित्र बोर्ड पर बना सकते हैं?"
             ]
         elif personality == "Weak learner":
             templates = [
-                f"सर/मैम, मैं {t_clean} को लेकर थोड़ी उलझन में हूँ। क्या आप कृपया {keyword} के एक बहुत ही सरल उदाहरण के साथ समझा सकते हैं?",
-                f"मैं {t_clean} को समझने की कोशिश कर रही हूँ, पर यह थोड़ा कठिन लग रहा है। {keyword} का मुख्य अर्थ क्या है?",
-                f"तो... क्या {t_clean} का मतलब यह हुआ कि जब तापमान बढ़ता है तो दबाव भी बढ़ता है? या मैंने उल्टा समझ लिया?"
+                f"सर, मुझे {t_clean} बिल्कुल समझ नहीं आया। यह {keyword} क्या होता है?",
+                f"सर, थोड़ा धीरे पढ़ाइए ना... {t_clean} को थोड़ा आसान तरीके से समझा सकते हैं?",
+                f"मैं कोशिश कर रही हूँ, पर {keyword} बहुत कठिन शब्द लग रहा है..."
             ]
         else: # Overconfident student
             templates = [
-                f"अरे, {t_clean} तो बहुत आसान है! यह तो {s_clean} और {keyword} का मूल ज्ञान है। हमें इसे ज़्यादा रटने की ज़रूरत नहीं है!",
-                f"मुझे {t_clean} का उत्तर पता है! यह सब चुंबकत्व और गुरुत्वाकर्षण के कारण होता है। मैं शत-प्रतिशत आश्वस्त हूँ!",
-                f"इसका सीधा जवाब है कि {t_clean} बस एक प्राकृतिक नियम है और मैं इसके बारे में पहले से सब जानता हूँ!"
+                f"अरे, यह तो बहुत आसान है! सबको पता है कि {t_clean} का मतलब {keyword} ही है।",
+                f"मुझे यह पहले से पता था! यह तो बहुत बेसिक है ना?",
+                f"साफ़ बात है कि इसका जवाब {keyword} है। मैं एकदम श्योर हूँ।"
             ]
     elif language == "Bengali":
         if personality == "Curious student":
             templates = [
-                f"শিক্ষক মহাশয়, আমি {t_clean} সম্পর্কে পড়ছিলাম। এটি {s_clean}-এর অন্যান্য বিষয়ের সাথে কীভাবে সম্পর্কিত? আমরা কি {keyword} নিয়ে আরও আলোচনা করতে পারি?",
-                f"{t_clean}-এর এই ধারণাটি অত্যন্ত চমৎকার! যদি আমরা এর {keyword} পরিস্থিতি পরিবর্তন করি তবে কী প্রভাব পড়বে?",
-                f"আমাদের দৈনন্দিন জীবনে {t_clean}-এর বাস্তব প্রয়োগ কী? এটি আমরা কীভাবে কাজে লাগাতে পারি?"
+                f"আরে দারুণ তো! কিন্তু {t_clean}-এর সাথে {keyword} কীভাবে কাজ করে স্যার?",
+                f"আমি গতকালই {t_clean} নিয়ে পড়ছিলাম! তার মানে কি এতে {keyword}-ও আছে?",
+                f"কিন্তু স্যার, আমরা যদি {keyword} বদলে দিই, তাহলে {t_clean}-এর কী হবে?"
             ]
         elif personality == "Shy student":
             templates = [
-                f"উম... হ্যাঁ স্যার, মনে হয় {t_clean} বুঝতে পারছি... (ধীরে ধীরে মাথা নাড়ে)",
-                f"আমার মনে হয় {t_clean}-এর উত্তরটা {keyword}-এর সাথে সম্পর্কিত হবে, তবে আমি পুরোপুরি নিশ্চিত নই... দুঃখিত।",
-                f"... (অনন্যা শান্ত আছে) হ্যাঁ স্যার, আমি শুনছি এবং {t_clean} নিয়ে খাতায় লিখছি।"
+                f"উম... আমার মনে হয়... হয়তো {keyword}...?",
+                f"দুঃখিত স্যার, আমি ঠিক জানি না... এটা কি {t_clean}-এর ব্যাপারে?",
+                f"আমি... আমি খাতায় জাস্ট {keyword} লিখছিলাম..."
             ]
         elif personality == "Distracted student":
             templates = [
-                f"ওহ! দুঃখিত স্যার, আপনি {t_clean} সম্পর্কে কী বলছিলেন? আমি জানলার বাইরে একটি পাখি দেখছিলাম...",
-                f"আপনি কি {t_clean}-এর শেষ অংশটি আর একবার বলবেন? আমি খাতায় {keyword} নিয়ে অন্য কিছু লিখছিলাম...",
-                f"শিক্ষক মহাশয়, {t_clean} কি কোনোভাবে আমাদের গেমসের সাথে যুক্ত? আমাদের টিফিন কখন হবে?"
+                f"অ্যাঁ, কী? দুঃখিত স্যার, আমি পেন খুঁজছিলাম... {t_clean} নিয়ে কী বললেন আর একবার বলবেন?",
+                f"ওহ, উম, {keyword}? সরি স্যার, আমি ভুলে গেছি আমরা কোন পেজে আছি...",
+                f"আমরা কি এখনও {t_clean} পড়ছি? স্যার, টিফিন কখন হবে?"
             ]
         elif personality == "Hyperactive student":
             templates = [
-                f"স্যার! স্যার! {t_clean} তো দারুণ মজার! আমরা কি এখনই {keyword} নিয়ে কোনো পরীক্ষা করতে পারি? প্লিজ স্যার!",
-                f"আমি জানি! {t_clean} ঠিক যেমন একটা বল ছুড়ে দিলে মাধ্যাকর্ষণের জন্য নিচে নেমে আসে, তাই না?",
-                f"ওটা তো খুবই সহজ! আমার গতকাল দেখা একটি ভিডিওর কথা মনে পড়ে গেল! আমি কি ওটা শেয়ার করতে পারি?"
+                f"স্যার! স্যার! আমি জানি! এটা {keyword}-এর মতো, তাই না?! আমরা কি এটা নিয়ে একটা পরীক্ষা করতে পারি স্যার?!",
+                f"আমি জানি, আমি জানি! কাল আমি {t_clean} নিয়ে একটা ভিডিও দেখেছি স্যার, খুব দারুণ ছিল!",
+                f"বাহ স্যার, {t_clean} তো খুব খাসা! আমরা কি {keyword}-এর ছবিটা বোর্ডে আঁকতে পারি?"
             ]
         elif personality == "Weak learner":
             templates = [
-                f"স্যার/ম্যাডাম, আমি {t_clean} নিয়ে একটু বিভ্রান্ত হয়ে পড়েছি। আপনি কি দয়া করে {keyword}-এর একটি সহজ উদাহরণ দিয়ে বুঝিয়ে দেবেন?",
-                f"আমি {t_clean} বোঝার চেষ্টা করছি, কিন্তু একটু বেশি দ্রুত হয়ে যাচ্ছে। ওই {keyword} বিষয়টার মূল মানে কী?",
-                f"তাহলে... {t_clean}-এর মানে কি এই যে তাপমাত্রা বাড়লে এটা ঘটে? নাকি আমি ভুল বুঝলাম?"
+                f"স্যার, আমি {t_clean} একদম বুঝতে পারছি না। এই {keyword} জিনিসটা কী?",
+                f"স্যার, একটু আস্তে পড়ান না... {t_clean} একটু সহজ করে বোঝানো যায় না?",
+                f"আমি চেষ্টা করছি স্যার, কিন্তু {keyword} শব্দটা বড্ড কঠিন লাগছে..."
             ]
         else: # Overconfident student
             templates = [
-                f"আরে, {t_clean} তো খুবই সহজ! এটি তো {s_clean}-এর সাধারণ {keyword} বিষয়, তাই না? আমাদের এটি বেশি পড়ার প্রয়োজন নেই!",
-                f"আমি {t_clean}-এর উত্তর ১০০ ভাগ নিশ্চিত জানি! এটি চুম্বকত্ব আর {keyword}-এর জন্য ঘটে থাকে স্যার!",
-                f"এর ব্যাখ্যা তো খুবই সহজ এবং আমি {t_clean} সম্পর্কে আগে থেকেই সব জানি, আমাদের সময় নষ্ট না করলেও চলবে!"
+                f"আরে, এটা তো খুবই সহজ! সবাই জানে {t_clean} মানেই {keyword}।",
+                f"আমি এটা আগে থেকেই জানি! এটা তো একদম সাধারণ ব্যাপার, তাই না?",
+                f"সোজা কথা হলো এটার উত্তর {keyword}। আমি ১০০ পারসেন্ট শিওর।"
             ]
     else: # English (Default)
         if personality == "Curious student":
             templates = [
-                f"Teacher, I was reading about {t_clean} in {s_clean}. How does this concept apply if we change the scale or {keyword}? Can you explain the correlation?",
-                f"This concept of {t_clean} is fascinating! Can we relate this phenomenon to other {keyword} we learned recently?",
-                f"That makes sense, but what is the practical, real-world application of {t_clean} in our daily lives?"
+                f"Wait, that's so cool! But how does {t_clean} work with {keyword}?",
+                f"I was reading about {t_clean} yesterday! Does it mean {keyword} is always involved?",
+                f"But what happens to {t_clean} if we change the {keyword}?"
             ]
         elif personality == "Shy student":
             templates = [
-                f"Umm... yes, I think I understand {t_clean}... (nods quietly)",
-                f"I... I think the answer for {t_clean} might be related to {keyword}, but I'm not entirely sure... sorry.",
-                f"... (Ananya looks down and speaks softly) I am listening and taking notes on {t_clean}, thank you."
+                f"Um... I think maybe... it has to do with {keyword}...?",
+                f"Sorry, I'm not really sure... is it about {t_clean}?",
+                f"I... I was just writing down {keyword} in my notes..."
             ]
         elif personality == "Distracted student":
             templates = [
-                f"Wait, sorry teacher, what did you say about {t_clean}? I was looking at a bird outside...",
-                f"Oh! Um, yes... could you repeat that part about {t_clean}? I was just writing down something about {keyword} in my notebook...",
-                f"Teacher, how does {t_clean} relate to the video games we play? Also, when is lunch break?"
+                f"Wait, what? Sorry, I was looking at my eraser... what did you say about {t_clean}?",
+                f"Oh, um, {keyword}? Sorry, I lost my page...",
+                f"Wait, are we still talking about {t_clean}? I was wondering when lunch is..."
             ]
         elif personality == "Hyperactive student":
             templates = [
-                f"Ooh! Ooh! Pick me! I know! {t_clean} is just like when you throw a ball and it comes down because of gravity, right?",
-                f"I have a great idea! Can we do a live science experiment on {t_clean} right now using {keyword}? Can we, teacher? Please!",
-                f"This reminds me of a cool YouTube video I saw yesterday about {t_clean}! Can we blow things up?"
+                f"OH OH! I know! It's like {keyword}, right?! Can we do a science experiment on this?!",
+                f"Pick me, teacher! I know! My brother told me all about {t_clean} last week!",
+                f"Wow, {t_clean} is awesome! Let's build a model of {keyword}!"
             ]
         elif personality == "Weak learner":
             templates = [
-                f"Sir/Ma'am, I am a bit confused about {t_clean}. Could you please explain {keyword} again with a simple example?",
-                f"I'm trying to follow {t_clean}, but it's going a bit too fast for me. What does that specific term in {keyword} mean?",
-                f"So... does it mean that in {t_clean}, when one variable increases, this happens? Or did I get it backwards?"
+                f"Wait, teacher... I don't get {t_clean} at all. What is {keyword}?",
+                f"This is too fast for me... can you explain {t_clean} again but way simpler?",
+                f"I'm trying, but {keyword} just sounds like a big word I don't understand..."
             ]
         else: # Overconfident student
             templates = [
-                f"That's easy! The answer for {t_clean} is obviously 100 times that, because everything multiplies under these {keyword} conditions!",
-                f"I already know all about {t_clean}! It's basically just common sense in {s_clean}, right? We don't even need to write it down.",
-                f"The explanation for {t_clean} is simple: it works because of magnetism and {keyword}. I'm 100% sure that's correct!"
+                f"Pfft, easy! Everyone knows {t_clean} is just about {keyword}.",
+                f"I already knew this! It's basically just common sense, right?",
+                f"Obviously the answer is {keyword}. I'm like 100% sure."
             ]
     base_reply = random.choice(templates)
     
@@ -484,9 +484,9 @@ async def generate_student_reply(
                - If the teacher scolds or warns → react to the warning.
                - If the teacher explains a concept → react to the explanation (ask questions, get confused, zone out, etc. based on personality).
                - NEVER give a response that doesn't match what the teacher just said. A greeting deserves a greeting. A question deserves an attempt at an answer.
-            2. Generate a realistic, natural student response that sounds like a REAL CHILD speaking — not a textbook character.
+            2. **DO NOT SOUND SCRIPTED OR ROBOTIC (CRITICAL):** Never say formal phrases like "that is fascinating", "correlation", "parameters", "explain the phenomenon", or other textbook speech. A real child NEVER speaks like an academic bot.
             3. Be highly concise: keep responses short and natural (1-2 sentences max, like real kids actually talk).
-            4. Use casual, natural kid language — contractions, filler words ("like", "umm", "y'know"), incomplete sentences. NOT formal academic language.
+            4. Use casual, natural kid language — contractions, slang, filler words ("like", "umm", "y'know", "wait...", "sorry..."), incomplete sentences. NOT formal academic language.
             5. Act strictly according to the student's specific character:
                - Aarav (Curious): Fascinated, asks "but why?" and "how does that work?". Greets warmly and asks what they'll learn today.
                - Ananya (Shy): Barely audible, uses "..." pauses. Greets very quietly. Never volunteers.
