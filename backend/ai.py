@@ -319,6 +319,7 @@ async def generate_student_reply(
     """
     Generates a student response. Calls Gemini API if available, else falls back to dynamic rule-based logic.
     """
+    language = str(language).strip().title()
     # Clean up the teacher message to check for simple greetings
     t_msg_clean = teacher_message.lower().strip("?!., ")
     
