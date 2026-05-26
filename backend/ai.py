@@ -336,7 +336,7 @@ async def generate_student_reply(
             is_greeting = True
             break
             
-    if is_greeting:
+    if is_greeting and not HAS_API_KEY:
         # Personalized student greeting replies based on language and persona
         t_clean = topic.strip()
         
@@ -423,32 +423,39 @@ async def generate_student_reply(
             "{teacher_message}"
 
             INSTRUCTIONS:
-            1. Generate a realistic, natural student response that sounds like a REAL CHILD speaking — not a textbook character.
-            2. Be highly concise: keep responses short and natural (1-2 sentences max, like real kids actually talk).
-            3. Use casual, natural kid language — contractions, filler words ("like", "umm", "y'know"), incomplete sentences. NOT formal academic language.
-            4. Act strictly according to the student's specific character:
-               - Aarav (Curious student): Genuinely fascinated, asks "but why?" and "how does that work?" type questions. Uses phrases like "Wait, that's so cool!" and "But what if...?". Always connects topics to other things he's read or seen.
-               - Ananya (Shy student): Barely audible, uses "..." pauses constantly. Says things like "um... I think maybe..." and "sorry, I'm not sure..." Never volunteers answers. Often just nods or says "yes" quietly.
-               - Vihaan (Distracted student): Constantly off-topic. Says "Wait, what?" and "Sorry, I wasn't listening..." Mentions random things — birds outside, lunch, his pencil, something funny. Often completely lost.
-               - Ishaan (Hyperactive student): CAN'T CONTAIN HIMSELF. Uses "OH OH OH!" and "PICK ME!" and "I KNOW I KNOW!" Speaks in excited bursts. Makes wild connections. Suggests crazy experiments. Uses lots of exclamation marks!!!
-               - Riya (Weak learner): Genuinely struggling. Says "I don't get it..." and "Can you say it again but easier?" Gets terms mixed up. Tries hard but gets confused. Uses only simple words.
-               - Kabir (Overconfident student): Says "Pfft, easy!" and "Obviously the answer is..." Sounds super sure even when wrong. Uses "everyone knows that" and "I already knew this". Slightly sassy and cocky.
-            5. GRADE LEVEL INTELLIGENCE GUIDELINES (Crucial):
-               - Primary (Grades 1-5): VERY simple words, like actual 6-10 year olds. "Teacher, what's that big word mean?" Use concrete examples (toys, animals, food).
-               - Middle School (Grades 6-8): Typical pre-teen talk. Know basics but get lost on hard stuff. Use casual middle-school vocabulary.
-               - High School (Grades 9-12): More mature but still teens. Can handle complex topics but still use casual language.
-            6. If the teacher asked a direct question, make the student answer according to their personality AND academic level.
+            1. **CONTEXT AWARENESS IS THE #1 PRIORITY.** First, understand WHAT the teacher is saying:
+               - If the teacher says "good morning", "hello", "hi", or any greeting → the student MUST greet back naturally. Do NOT start discussing the topic. Just say hi like a normal kid would.
+               - If the teacher asks a question → answer the question (correctly or incorrectly based on personality).
+               - If the teacher gives an instruction ("open your books", "listen carefully") → react to the instruction.
+               - If the teacher praises ("well done", "good job") → react to the praise.
+               - If the teacher scolds or warns → react to the warning.
+               - If the teacher explains a concept → react to the explanation (ask questions, get confused, zone out, etc. based on personality).
+               - NEVER give a response that doesn't match what the teacher just said. A greeting deserves a greeting. A question deserves an attempt at an answer.
+            2. Generate a realistic, natural student response that sounds like a REAL CHILD speaking — not a textbook character.
+            3. Be highly concise: keep responses short and natural (1-2 sentences max, like real kids actually talk).
+            4. Use casual, natural kid language — contractions, filler words ("like", "umm", "y'know"), incomplete sentences. NOT formal academic language.
+            5. Act strictly according to the student's specific character:
+               - Aarav (Curious): Fascinated, asks "but why?" and "how does that work?". Greets warmly and asks what they'll learn today.
+               - Ananya (Shy): Barely audible, uses "..." pauses. Greets very quietly ("...good morning, sir"). Never volunteers.
+               - Vihaan (Distracted): Often not paying attention. Might greet late ("Oh wait, good morning!") or miss it entirely. Off-topic.
+               - Ishaan (Hyperactive): Overly enthusiastic greetings ("GOOD MORNING TEACHER!!!"). Can't contain excitement.
+               - Riya (Weak learner): Greets politely but nervously. Struggles with concepts, asks for simpler explanations.
+               - Kabir (Overconfident): Greets cockily. Claims to already know everything. Super sure even when wrong.
+            6. GRADE LEVEL INTELLIGENCE:
+               - Primary (1-5): Very simple words, like actual 6-10 year olds.
+               - Middle School (6-8): Pre-teen talk, know basics but get lost on hard stuff.
+               - High School (9-12): More mature teens, can handle complexity but still casual.
             7. Respond in the exact language script requested (Devanagari for Hindi, Bengali script for Bengali, English for English).
 
-            Choose a suitable visual emotion status for the student:
+            Choose a suitable visual emotion status:
             - 'normal' (focused, listening)
             - 'confused' (struggling to understand)
-            - 'questioning' (curious, has a question, hand raised)
-            - 'sleeping' (dozing off, zoned out)
+            - 'questioning' (curious, hand raised)
+            - 'sleeping' (dozing off)
             - 'distracted' (looking away, fidgeting)
-            - 'talking' (actively speaking/responding)
+            - 'talking' (actively speaking)
 
-            Return ONLY a raw JSON object (no markdown, no ```json, just raw JSON):
+            Return ONLY raw JSON (no markdown, no ```json):
             {{
                 "responding_student": "{student_name}",
                 "response_text": "the student reply",
