@@ -35,7 +35,10 @@ from fastapi.responses import FileResponse
 from voice import generate_speech_audio
 
 # Initialize database tables
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as table_err:
+    print(f"[DB] Metadata create_all warning: {table_err}")
 
 # Auto-migrate: Ensure newly added columns exist in deployed database (e.g. Postgres on Render)
 from sqlalchemy import text

@@ -21,7 +21,20 @@ else:
     # Some platforms (like Render/Heroku) output 'postgres://', but SQLAlchemy requires 'postgresql://'
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-    engine = create_engine(DATABASE_URL)
+    
+    try:
+        # Create Postgres engine and test connection immediately
+        engine = create_engine(DATABASE_URL)
+        with engine.connect() as conn:
+            pass
+        print("[DB] Successfully connected to PostgreSQL database.")
+    except Exception as pg_err:
+        print(f"[DB] ERROR: Could not connect to PostgreSQL: {pg_err}")
+        print("[DB] Falling back to local SQLite database.")
+        DATABASE_URL = "sqlite:///./classroom.db"
+        engine = create_engine(
+            DATABASE_URL, connect_args={"check_same_thread": False}
+        )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
