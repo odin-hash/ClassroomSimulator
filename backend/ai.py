@@ -337,7 +337,7 @@ async def generate_student_reply(
             is_greeting = True
             break
             
-    if is_greeting and not HAS_API_KEY:
+    if is_greeting:
         # Personalized student greeting replies based on language and persona
         t_clean = topic.strip()
         
@@ -470,7 +470,7 @@ async def generate_student_reply(
             }}
             """
             
-            model = genai.GenerativeModel("gemini-2.5-flash")
+            model = genai.GenerativeModel("gemini-1.5-flash")
             response = model.generate_content(prompt)
             print(f"[AI GENERATE] Raw Gemini Response: {response.text}")
             cleaned_text = clean_json_response(response.text)
@@ -588,7 +588,7 @@ async def generate_evaluation(
             }}
             """
             
-            model = genai.GenerativeModel("gemini-2.5-flash")
+            model = genai.GenerativeModel("gemini-1.5-flash")
             response = model.generate_content(prompt)
             cleaned_text = clean_json_response(response.text)
             return json.loads(cleaned_text)
