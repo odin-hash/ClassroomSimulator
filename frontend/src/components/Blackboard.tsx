@@ -571,6 +571,78 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     setActivePreset(null);
   }, [subject, topic]);
 
+  // Native non-passive touch listeners to support Apple Pencil and Touch writing on iPad without viewport scrolling or elastic shaking ("giggling")
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const touch = e.touches[0];
+      const x = (touch.clientX - rect.left) * scaleX;
+      const y = (touch.clientY - rect.top) * scaleY;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      setIsDrawing(true);
+      
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDrawing || e.touches.length === 0) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const touch = e.touches[0];
+      const x = (touch.clientX - rect.left) * scaleX;
+      const y = (touch.clientY - rect.top) * scaleY;
+
+      ctx.lineWidth = isEraser ? 24 : penSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = isEraser ? chalkboardColor : penColor;
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+
+      ctx.lineTo(x, y);
+      ctx.stroke();
+
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      setIsDrawing(false);
+    };
+
+    // Attach native touch event listeners explicitly setting passive to false
+    // This overrides the browser's default passive touch action, permitting e.preventDefault()
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [isDrawing, isEraser, penSize, penColor, isExpanded]);
+
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -2160,7 +2232,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
 
       {/* Chalkboard Canvas & Floating Toolbar (Visible only when expanded) */}
       {isExpanded && (
-        <div className="blackboard-canvas-container">
+        <div className="blackboard-canvas-container" style={{ touchAction: 'none' }}>
           <canvas
             ref={canvasRef}
             width={1000}
@@ -2169,10 +2241,15 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
             onMouseMove={draw}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
-            onTouchStart={startDrawingTouch}
-            onTouchMove={drawTouch}
-            onTouchEnd={stopDrawing}
-            style={{ width: '100%', height: '100%', cursor: 'crosshair', display: 'block' }}
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              cursor: 'crosshair', 
+              display: 'block', 
+              touchAction: 'none', 
+              userSelect: 'none', 
+              WebkitUserSelect: 'none' 
+            }}
           />
 
           {/* Centered Floating Toolbar Pill Menu */}
