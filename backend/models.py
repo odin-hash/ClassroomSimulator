@@ -20,6 +20,23 @@ class ClassroomSession(Base):
 
     messages = relationship("SessionMessage", back_populates="session", cascade="all, delete-orphan")
     analytics = relationship("SessionAnalytics", back_populates="session", uselist=False, cascade="all, delete-orphan")
+    student_states = relationship("StudentState", back_populates="session", cascade="all, delete-orphan")
+
+
+class StudentState(Base):
+    __tablename__ = "student_states"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False)
+    student_name = Column(String, nullable=False)
+    attention_level = Column(Integer, default=80)     # 0 to 100
+    confidence_level = Column(Integer, default=70)    # 0 to 100
+    understanding_level = Column(Integer, default=75) # 0 to 100
+    confusion_level = Column(Integer, default=20)     # 0 to 100
+    memory_summary = Column(Text, nullable=True)      # Persistent summary of lesson memory
+    participation_count = Column(Integer, default=0)
+
+    session = relationship("ClassroomSession", back_populates="student_states")
 
 
 class SessionMessage(Base):

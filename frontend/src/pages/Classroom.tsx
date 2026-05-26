@@ -75,9 +75,6 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes default in seconds
   const [timerActive, setTimerActive] = useState(true);
 
-  // Speech Recognition reference
-  const recognitionRef = useRef<any>(null);
-
   // Audio queue and volume states for premium neural voice playback
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.85);
@@ -88,7 +85,17 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const wasMicEnabledRef = useRef(false);
   const handleSendTurnRef = useRef<any>(null);
   const activeUtteranceRef = useRef<any>(null);
-  const isListeningRef = useRef(false);
+
+  // VAD and MediaRecorder state/refs
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const vadIntervalRef = useRef<any>(null);
+  const silenceStartRef = useRef<number | null>(null);
+  const isRecordingRef = useRef(false);
 
   // 1. Fetch Session Info & Students list
   useEffect(() => {
@@ -129,57 +136,22 @@ export const Classroom: React.FC<ClassroomProps> = ({
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isPending]);
 
-  // 4. Initialize Speech Recognition
+  // 4. Cleanup VAD on unmount
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const rec = new SpeechRecognition();
-      rec.continuous = false;
-      rec.interimResults = false;
-      
-      // Select correct BLocale lang for recognition
-      if (language === 'Hindi') {
-        rec.lang = 'hi-IN';
-      } else if (language === 'Bengali') {
-        rec.lang = 'bn-IN';
-      } else {
-        rec.lang = 'en-US';
-      }
-
-      rec.onstart = () => {
-        setIsListening(true);
-        isListeningRef.current = true;
-      };
-
-      rec.onresult = (event: any) => {
-        const transcriptText = event.results[0][0].transcript;
-        setTeacherInput(transcriptText);
-        if (transcriptText.trim()) {
-          console.info("[Mic Auto-Send] Speech recognized. Auto-transcribing and sending turn:", transcriptText);
-          handleSendTurnRef.current?.(transcriptText);
-        }
-      };
-
-      rec.onerror = (e: any) => {
-        console.error('Speech recognition error:', e);
-        setIsListening(false);
-        isListeningRef.current = false;
-      };
-
-      rec.onend = () => {
-        setIsListening(false);
-        isListeningRef.current = false;
-      };
-
-      recognitionRef.current = rec;
-    }
-
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
+      if (vadIntervalRef.current) {
+        clearInterval(vadIntervalRef.current);
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (audioContextRef.current) {
+        if (audioContextRef.current.state !== 'closed') {
+          audioContextRef.current.close();
+        }
       }
     };
-  }, [language]);
+  }, []);
 
   // iOS Safari touch audio context & SpeechSynthesis unlocker
   useEffect(() => {
@@ -244,12 +216,14 @@ export const Classroom: React.FC<ClassroomProps> = ({
       return;
     }
 
-    // Ensure mic is paused while speech is active to avoid self-feedback loops
-    if (recognitionRef.current) {
+    // Ensure VAD recording is paused while speech is active to avoid self-feedback loops
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
-        recognitionRef.current.abort();
+        mediaRecorderRef.current.stop();
       } catch (e) {}
     }
+    isRecordingRef.current = false;
+    silenceStartRef.current = null;
 
     isAudioPlayingRef.current = true;
     const { text, studentName, emotion } = audioQueueRef.current[0];
@@ -295,13 +269,8 @@ export const Classroom: React.FC<ClassroomProps> = ({
       if (audioQueueRef.current.length === 0) {
         isAudioPlayingRef.current = false;
         // Resume voice recognition if it was enabled
-        if (wasMicEnabledRef.current && recognitionRef.current) {
-          try {
-            recognitionRef.current.start();
-            console.info("[Mic Auto-Resume] Audio queue empty. Resuming listening dynamically...");
-          } catch (e) {
-            console.warn("[Mic Auto-Resume] Already running or failed to start:", e);
-          }
+        if (wasMicEnabledRef.current) {
+          console.info("[Mic Auto-Resume] Audio queue empty. VAD listening automatically resumed.");
         }
       } else {
         processAudioQueue();
@@ -518,7 +487,11 @@ export const Classroom: React.FC<ClassroomProps> = ({
     }
     setTeacherInput('');
     if (isListening) {
-      recognitionRef.current?.stop();
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try { mediaRecorderRef.current.stop(); } catch (e) {}
+      }
+      isRecordingRef.current = false;
+      silenceStartRef.current = null;
     }
 
     // Add local optimistic teacher message to transcripts
@@ -658,13 +631,171 @@ export const Classroom: React.FC<ClassroomProps> = ({
     handleSendTurn(actionLogText, studentName, actionType);
   };
 
+  // Cleanup VAD and stop microphone
+  const cleanupVAD = () => {
+    if (vadIntervalRef.current) {
+      clearInterval(vadIntervalRef.current);
+      vadIntervalRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (e) {
+        console.error("[VAD cleanup] Stop recorder failed:", e);
+      }
+    }
+    mediaRecorderRef.current = null;
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+    if (audioContextRef.current) {
+      if (audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+    audioChunksRef.current = [];
+    silenceStartRef.current = null;
+    isRecordingRef.current = false;
+    setIsListening(false);
+  };
+
+  // Upload recorded speech blob to transcribe endpoint
+  const uploadAndTranscribe = async (audioBlob: Blob) => {
+    try {
+      setIsPending(true);
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'speech.webm');
+
+      console.info("[STT] Uploading recorded speech to /api/transcribe...");
+      const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to transcribe audio");
+      }
+
+      const data = await response.json();
+      console.info("[STT] Transcribed successfully:", data.text);
+
+      if (data.text && data.text.trim()) {
+        await handleSendTurn(data.text);
+      }
+    } catch (e) {
+      console.error("[STT] Upload/Transcription error:", e);
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  // Start microphone VAD tracking
+  const startVAD = async () => {
+    try {
+      // 1. Get User Media
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      // 2. Setup Web Audio
+      const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
+      const audioCtx = new AudioContextClass();
+      audioContextRef.current = audioCtx;
+
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      analyserRef.current = analyser;
+      source.connect(analyser);
+
+      setIsListening(true);
+
+      // 3. Set VAD checking loop
+      const threshold = 0.025; // Amplitude threshold (RMS)
+      const bufferLength = analyser.fftSize;
+      const dataArray = new Uint8Array(bufferLength);
+
+      vadIntervalRef.current = setInterval(() => {
+        if (!analyserRef.current || isAudioPlayingRef.current) return;
+        analyserRef.current.getByteTimeDomainData(dataArray);
+
+        // Calculate RMS amplitude
+        let sumSquares = 0.0;
+        for (let i = 0; i < bufferLength; i++) {
+          const norm = (dataArray[i] - 128) / 128;
+          sumSquares += norm * norm;
+        }
+        const rms = Math.sqrt(sumSquares / bufferLength);
+
+        // Check if user is speaking
+        const userIsSpeaking = rms > threshold;
+        setIsSpeaking(userIsSpeaking);
+
+        if (userIsSpeaking) {
+          silenceStartRef.current = null;
+
+          if (!isRecordingRef.current) {
+            console.log("[VAD] Speech started (rms=" + rms.toFixed(4) + "), starting recording.");
+            audioChunksRef.current = [];
+
+            const mediaRecorder = new MediaRecorder(mediaStreamRef.current!);
+            mediaRecorderRef.current = mediaRecorder;
+
+            mediaRecorder.ondataavailable = (event) => {
+              if (event.data && event.data.size > 0) {
+                audioChunksRef.current.push(event.data);
+              }
+            };
+
+            mediaRecorder.onstop = async () => {
+              console.log("[VAD] MediaRecorder stopped. Chunks:", audioChunksRef.current.length);
+              if (audioChunksRef.current.length === 0) return;
+              
+              const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+              audioChunksRef.current = [];
+              
+              await uploadAndTranscribe(audioBlob);
+            };
+
+            try {
+              mediaRecorder.start(100);
+              isRecordingRef.current = true;
+            } catch (err) {
+              console.error("[VAD] Failed to start MediaRecorder:", err);
+            }
+          }
+        } else {
+          // If silence is detected and we are currently recording
+          if (isRecordingRef.current) {
+            if (silenceStartRef.current === null) {
+              silenceStartRef.current = Date.now();
+            } else if (Date.now() - silenceStartRef.current > 1500) {
+              console.log("[VAD] Silence detected for 1.5s. Stopping recording to transcribe.");
+              if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                try {
+                  mediaRecorderRef.current.stop();
+                } catch (e) {
+                  console.error(e);
+                }
+              }
+              isRecordingRef.current = false;
+              silenceStartRef.current = null;
+            }
+          }
+        }
+      }, 50);
+
+    } catch (err) {
+      console.error("[VAD] Failed to initialize microphone VAD:", err);
+      alert("Failed to access microphone. Please check permissions.");
+      cleanupVAD();
+    }
+  };
+
   // Toggle voice recognition
   const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert('Speech Recognition is not supported by your browser. Please use Chrome, Edge, or Safari, or type in the input box.');
-      return;
-    }
-
     // Proactively trigger a silent speech utterance to unlock Safari SpeechSynthesis on user gesture
     if ('speechSynthesis' in window) {
       try {
@@ -678,10 +809,10 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
     if (isListening) {
       wasMicEnabledRef.current = false;
-      recognitionRef.current.stop();
+      cleanupVAD();
     } else {
       wasMicEnabledRef.current = true;
-      recognitionRef.current.start();
+      startVAD();
     }
   };
 
@@ -1047,12 +1178,19 @@ export const Classroom: React.FC<ClassroomProps> = ({
           <div className="dock-action-buttons">
             {/* STT Mic trigger */}
              <button 
-              className={`dock-mic-button ${isListening ? 'listening' : ''}`}
+              className={`dock-mic-button ${isListening ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}
               onClick={toggleListening}
               title={isListening ? t.micListening : t.micIdle}
               id="classroom-btn-mic"
               type="button"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                transform: isSpeaking ? 'scale(1.15)' : 'scale(1)',
+                transition: 'all 0.15s ease-in-out',
+                boxShadow: isSpeaking ? '0 0 20px #ef4444' : 'none'
+              }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
             </button>

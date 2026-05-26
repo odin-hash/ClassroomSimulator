@@ -33,6 +33,28 @@ class ClassroomSessionBase(BaseModel):
     language: str = "English"  # English, Hindi, Bengali
 
 
+class StudentStateBase(BaseModel):
+    student_name: str
+    attention_level: int
+    confidence_level: int
+    understanding_level: int
+    confusion_level: int
+    memory_summary: Optional[str] = None
+    participation_count: int = 0
+
+
+class StudentStateCreate(StudentStateBase):
+    pass
+
+
+class StudentStateOut(StudentStateBase):
+    id: int
+    session_id: int
+
+    class Config:
+        from_attributes = True
+
+
 class ClassroomSessionCreate(ClassroomSessionBase):
     pass
 
@@ -41,6 +63,7 @@ class ClassroomSessionOut(ClassroomSessionBase):
     id: int
     created_at: datetime
     messages: List[SessionMessageOut] = []
+    student_states: List[StudentStateOut] = []
 
     class Config:
         from_attributes = True

@@ -8,12 +8,12 @@ if backend_dir not in sys.path:
 
 import random
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from database import engine, get_db, Base
-from models import ClassroomSession, SessionMessage, SessionAnalytics
+from models import ClassroomSession, SessionMessage, SessionAnalytics, StudentState
 from schemas import (
     ClassroomSessionCreate,
     ClassroomSessionOut,
@@ -76,6 +76,31 @@ def create_session(session_data: ClassroomSessionCreate, db: Session = Depends(g
     db.add(db_session)
     db.commit()
     db.refresh(db_session)
+
+    # Populate initial StudentState for each of the 6 students
+    default_states = [
+        {"name": "Aarav", "attention": 90, "confidence": 75, "understanding": 80, "confusion": 10},
+        {"name": "Ananya", "attention": 80, "confidence": 50, "understanding": 70, "confusion": 25},
+        {"name": "Vihaan", "attention": 40, "confidence": 70, "understanding": 60, "confusion": 20},
+        {"name": "Ishaan", "attention": 85, "confidence": 80, "understanding": 75, "confusion": 15},
+        {"name": "Riya", "attention": 75, "confidence": 45, "understanding": 50, "confusion": 40},
+        {"name": "Kabir", "attention": 80, "confidence": 90, "understanding": 70, "confusion": 15},
+    ]
+
+    for ds in default_states:
+        state = StudentState(
+            session_id=db_session.id,
+            student_name=ds["name"],
+            attention_level=ds["attention"],
+            confidence_level=ds["confidence"],
+            understanding_level=ds["understanding"],
+            confusion_level=ds["confusion"],
+            memory_summary=f"Class started. Topic: {db_session.topic}. Initial understanding established."
+        )
+        db.add(state)
+    
+    db.commit()
+    db.refresh(db_session)
     return db_session
 
 
@@ -91,6 +116,31 @@ def get_session(session_id: int, db: Session = Depends(get_db)):
     db_session = db.query(ClassroomSession).filter(ClassroomSession.id == session_id).first()
     if not db_session:
         raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Auto-initialize states for existing sessions without student_states
+    if not db_session.student_states:
+        default_states = [
+            {"name": "Aarav", "attention": 90, "confidence": 75, "understanding": 80, "confusion": 10},
+            {"name": "Ananya", "attention": 80, "confidence": 50, "understanding": 70, "confusion": 25},
+            {"name": "Vihaan", "attention": 40, "confidence": 70, "understanding": 60, "confusion": 20},
+            {"name": "Ishaan", "attention": 85, "confidence": 80, "understanding": 75, "confusion": 15},
+            {"name": "Riya", "attention": 75, "confidence": 45, "understanding": 50, "confusion": 40},
+            {"name": "Kabir", "attention": 80, "confidence": 90, "understanding": 70, "confusion": 15},
+        ]
+        for ds in default_states:
+            state = StudentState(
+                session_id=db_session.id,
+                student_name=ds["name"],
+                attention_level=ds["attention"],
+                confidence_level=ds["confidence"],
+                understanding_level=ds["understanding"],
+                confusion_level=ds["confusion"],
+                memory_summary=f"Class started. Topic: {db_session.topic}. Initial understanding established."
+            )
+            db.add(state)
+        db.commit()
+        db.refresh(db_session)
+        
     return db_session
 
 
@@ -208,6 +258,8 @@ async def process_teacher_turn(
     # 5. Generate Response Text via LLM (or fallback)
     print(f"[TURN PROCESS] Session ID: {session_id}, Session Language from DB: {db_session.language}")
     student_reply = await generate_student_reply(
+        session_id=session_id,
+        db=db,
         subject=db_session.subject,
         topic=db_session.topic,
         class_level=db_session.class_level,
@@ -232,6 +284,21 @@ async def process_teacher_turn(
     db.add(student_msg)
     db.commit()
 
+    # Fetch updated student states to return to frontend
+    updated_states = db.query(StudentState).filter(StudentState.session_id == session_id).all()
+    student_states_serialized = [
+        {
+            "student_name": s.student_name,
+            "attention_level": s.attention_level,
+            "confidence_level": s.confidence_level,
+            "understanding_level": s.understanding_level,
+            "confusion_level": s.confusion_level,
+            "memory_summary": s.memory_summary,
+            "participation_count": s.participation_count
+        }
+        for s in updated_states
+    ]
+
     return {
         "student_message": {
             "sender_name": responding_student_info["name"],
@@ -241,7 +308,8 @@ async def process_teacher_turn(
             "emotion": student_reply["emotion"]
         },
         "triggered_event": new_event_trigger,
-        "active_event_id": active_event_id if not new_event_trigger else new_event_trigger["id"]
+        "active_event_id": active_event_id if not new_event_trigger else new_event_trigger["id"],
+        "student_states": student_states_serialized
     }
 
 
@@ -321,4 +389,165 @@ async def text_to_speech(text: str, student: str, language: str = "English"):
     except Exception as e:
         print(f"TTS API Endpoint Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def transcribe_google(audio_content: bytes) -> str:
+    import sys
+    from google.cloud import speech
+    client = speech.SpeechClient()
+    audio = speech.RecognitionAudio(content=audio_content)
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED,
+        language_code="en-IN",
+        alternative_language_codes=["hi-IN", "bn-IN"],
+        enable_automatic_punctuation=True,
+    )
+    response = client.recognize(config=config, audio=audio)
+    transcript = ""
+    for result in response.results:
+        transcript += result.alternatives[0].transcript
+    return transcript
+
+
+async def transcribe_deepgram(audio_content: bytes) -> str:
+    import httpx
+    api_key = os.environ.get("DEEPGRAM_API_KEY")
+    if not api_key:
+        raise ValueError("DEEPGRAM_API_KEY not set")
+    headers = {
+        "Authorization": f"Token {api_key}",
+        "Content-Type": "audio/webm"
+    }
+    params = {
+        "model": "nova-2",
+        "smart_format": "true",
+        "detect_language": "true"
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://api.deepgram.com/v1/listen",
+            headers=headers,
+            params=params,
+            content=audio_content,
+            timeout=30.0
+        )
+        if response.status_code == 200:
+            res_json = response.json()
+            return res_json["results"]["channels"][0]["alternatives"][0]["transcript"]
+        else:
+            raise Exception(f"Deepgram STT failed: {response.text}")
+
+
+async def transcribe_assemblyai(audio_content: bytes) -> str:
+    import httpx
+    import asyncio
+    api_key = os.environ.get("ASSEMBLYAI_API_KEY")
+    if not api_key:
+        raise ValueError("ASSEMBLYAI_API_KEY not set")
+    headers = {
+        "Authorization": api_key,
+        "Content-Type": "application/json"
+    }
+    upload_headers = {
+        "Authorization": api_key,
+        "Content-Type": "application/octet-stream"
+    }
+    async with httpx.AsyncClient() as client:
+        upload_resp = await client.post(
+            "https://api.assemblyai.com/v2/upload",
+            headers=upload_headers,
+            content=audio_content,
+            timeout=60.0
+        )
+        if upload_resp.status_code != 200:
+            raise Exception(f"AssemblyAI upload failed: {upload_resp.text}")
+        audio_url = upload_resp.json()["upload_url"]
+        
+        transcribe_resp = await client.post(
+            "https://api.assemblyai.com/v2/transcript",
+            headers=headers,
+            json={
+                "audio_url": audio_url,
+                "language_detection": True
+            }
+        )
+        if transcribe_resp.status_code != 200:
+            raise Exception(f"AssemblyAI transcription trigger failed: {transcribe_resp.text}")
+        transcript_id = transcribe_resp.json()["id"]
+        
+        for _ in range(30):
+            await asyncio.sleep(1.0)
+            poll_resp = await client.get(
+                f"https://api.assemblyai.com/v2/transcript/{transcript_id}",
+                headers=headers
+            )
+            if poll_resp.status_code == 200:
+                status = poll_resp.json()["status"]
+                if status == "completed":
+                    return poll_resp.json()["text"]
+                elif status == "error":
+                    raise Exception(f"AssemblyAI failed: {poll_resp.json().get('error')}")
+        raise Exception("AssemblyAI transcription timed out")
+
+
+@app.post("/api/transcribe")
+async def transcribe_speech(file: UploadFile = File(...)):
+    """
+    Receives an audio file from the teacher microphone and transcribes it to text.
+    Dispatches to Google STT, Deepgram, or AssemblyAI with fallback.
+    """
+    import asyncio
+    audio_content = await file.read()
+    if not audio_content:
+        raise HTTPException(status_code=400, detail="Empty audio file uploaded")
+    
+    errors = []
+    
+    # 1. Google Speech-to-Text (Primary)
+    if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or os.environ.get("GOOGLE_API_KEY"):
+        try:
+            print("[STT] Attempting Google Cloud Speech-to-Text...")
+            import concurrent.futures
+            loop = asyncio.get_running_loop()
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                result = await loop.run_in_executor(pool, transcribe_google, audio_content)
+                if result:
+                    print(f"[STT] Google Cloud STT Success: '{result}'")
+                    return {"text": result, "provider": "google"}
+        except Exception as e:
+            err_msg = f"Google STT Error: {e}"
+            print(f"[STT] {err_msg}")
+            errors.append(err_msg)
+            
+    # 2. Deepgram (Secondary)
+    if os.environ.get("DEEPGRAM_API_KEY"):
+        try:
+            print("[STT] Attempting Deepgram Nova-2...")
+            result = await transcribe_deepgram(audio_content)
+            if result:
+                print(f"[STT] Deepgram Success: '{result}'")
+                return {"text": result, "provider": "deepgram"}
+        except Exception as e:
+            err_msg = f"Deepgram Error: {e}"
+            print(f"[STT] {err_msg}")
+            errors.append(err_msg)
+            
+    # 3. AssemblyAI (Tertiary)
+    if os.environ.get("ASSEMBLYAI_API_KEY"):
+        try:
+            print("[STT] Attempting AssemblyAI...")
+            result = await transcribe_assemblyai(audio_content)
+            if result:
+                print(f"[STT] AssemblyAI Success: '{result}'")
+                return {"text": result, "provider": "assemblyai"}
+        except Exception as e:
+            err_msg = f"AssemblyAI Error: {e}"
+            print(f"[STT] {err_msg}")
+            errors.append(err_msg)
+            
+    # If all failed or no keys are configured:
+    raise HTTPException(
+        status_code=500,
+        detail=f"Speech recognition could not be performed. Errors: {errors}"
+    )
 

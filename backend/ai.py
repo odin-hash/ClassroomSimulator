@@ -4,6 +4,8 @@ import random
 import re
 from typing import Dict, Any, List, Optional
 import google.generativeai as genai
+from sqlalchemy.orm import Session
+from models import StudentState
 
 # Setup Gemini API key
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -304,6 +306,8 @@ def build_topic_aware_response(
 
 
 async def generate_student_reply(
+    session_id: int,
+    db: Session,
     subject: str,
     topic: str,
     class_level: str,
@@ -317,7 +321,8 @@ async def generate_student_reply(
     active_event: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Generates a student response. Calls Gemini API if available, else falls back to dynamic rule-based logic.
+    Generates a student response. Calls Gemini API/OpenRouter if available,
+    incorporating persistent database StudentState metrics, and falls back to rule-based logic.
     """
     language = str(language).strip().title()
     # Clean up the teacher message to check for simple greetings
@@ -392,16 +397,53 @@ async def generate_student_reply(
             "emotion": emotion
         }
 
-    if HAS_API_KEY:
-        print(f"[AI GENERATE] Generating student reply for student: {student_name}, language: {language}")
-        try:
-            # Structure conversation history for prompt context
-            history_str = ""
-            for msg in conversation_history[-6:]:
-                history_str += f"{msg['sender_name']}: {msg['message_text']}\n"
+    # Query persistent StudentState from database
+    state_rec = db.query(StudentState).filter(
+        StudentState.session_id == session_id,
+        StudentState.student_name == student_name
+    ).first()
 
+    if not state_rec:
+        state_rec = StudentState(
+            session_id=session_id,
+            student_name=student_name,
+            attention_level=80,
+            confidence_level=70,
+            understanding_level=75,
+            confusion_level=20,
+            memory_summary=f"Class started. Topic: {topic}.",
+            participation_count=0
+        )
+        db.add(state_rec)
+        db.commit()
+        db.refresh(state_rec)
+
+    # Fetch states of other students in class for context
+    other_states = db.query(StudentState).filter(
+        StudentState.session_id == session_id,
+        StudentState.student_name != student_name
+    ).all()
+    other_states_summary = "\n".join([
+        f"- {s.student_name}: Attention={s.attention_level}%, Confidence={s.confidence_level}%, Understanding={s.understanding_level}%, Confusion={s.confusion_level}%"
+        for s in other_states
+    ])
+
+    # Format conversation history
+    history_str = ""
+    for msg in conversation_history:
+        sender = msg.get("sender_name", msg.get("sender_type", "Unknown"))
+        text = msg.get("message_text", "")
+        history_str += f"{sender}: {text}\n"
+    if not history_str:
+        history_str = "No previous turns in this session."
+
+    # Try API calls (Gemini or OpenRouter fallback)
+    has_openrouter = bool(os.environ.get("OPENROUTER_API_KEY"))
+    if HAS_API_KEY or has_openrouter:
+        print(f"[AI GENERATE] Generating reply for student: {student_name}, language: {language}")
+        try:
             prompt = f"""
-            You are simulating a classroom student for teacher training.
+            You are simulating the student "{student_name}" inside a virtual classroom.
             
             CLASSROOM CONTEXT:
             - Subject: {subject}
@@ -409,11 +451,20 @@ async def generate_student_reply(
             - Grade Level: {class_level}
             - Lesson Objectives: {objectives}
             - Teaching Method: {method}
-            - Language: {language} (You MUST respond in this language. If language is Hindi, speak Hindi. If Bengali, speak Bengali).
+            - Language: {language}
 
-            STUDENT PROFILE:
-            - Name: {student_name}
+            STUDENT PROFILE ({student_name}):
             - Personality: {student_personality}
+            - Current State Metrics:
+              * Attention Level: {state_rec.attention_level}/100
+              * Confidence Level: {state_rec.confidence_level}/100
+              * Understanding Level: {state_rec.understanding_level}/100
+              * Confusion Level: {state_rec.confusion_level}/100
+            - Persistent Session Memory: {state_rec.memory_summary}
+            - Participation Count: {state_rec.participation_count}
+
+            OTHER STUDENTS IN CLASS:
+            {other_states_summary}
             
             ACTIVE CLASSROOM EVENT (if any):
             - Event ID: {active_event if active_event else 'None'}
@@ -426,7 +477,7 @@ async def generate_student_reply(
 
             INSTRUCTIONS:
             1. **CONTEXT AWARENESS IS THE #1 PRIORITY.** First, understand WHAT the teacher is saying:
-               - If the teacher says "good morning", "hello", "hi", or any greeting → the student MUST greet back naturally. Do NOT start discussing the topic. Just say hi like a normal kid would.
+               - If the teacher says "good morning", "hello", "hi", or any greeting → the student MUST greet back naturally. Do NOT start discussing the topic.
                - If the teacher asks a question → answer the question (correctly or incorrectly based on personality).
                - If the teacher gives an instruction ("open your books", "listen carefully") → react to the instruction.
                - If the teacher praises ("well done", "good job") → react to the praise.
@@ -438,9 +489,9 @@ async def generate_student_reply(
             4. Use casual, natural kid language — contractions, filler words ("like", "umm", "y'know"), incomplete sentences. NOT formal academic language.
             5. Act strictly according to the student's specific character:
                - Aarav (Curious): Fascinated, asks "but why?" and "how does that work?". Greets warmly and asks what they'll learn today.
-               - Ananya (Shy): Barely audible, uses "..." pauses. Greets very quietly ("...good morning, sir"). Never volunteers.
-               - Vihaan (Distracted): Often not paying attention. Might greet late ("Oh wait, good morning!") or miss it entirely. Off-topic.
-               - Ishaan (Hyperactive): Overly enthusiastic greetings ("GOOD MORNING TEACHER!!!"). Can't contain excitement.
+               - Ananya (Shy): Barely audible, uses "..." pauses. Greets very quietly. Never volunteers.
+               - Vihaan (Distracted): Often not paying attention. Might greet late or miss it entirely. Off-topic.
+               - Ishaan (Hyperactive): Overly enthusiastic greetings. Can't contain excitement.
                - Riya (Weak learner): Greets politely but nervously. Struggles with concepts, asks for simpler explanations.
                - Kabir (Overconfident): Greets cockily. Claims to already know everything. Super sure even when wrong.
             6. GRADE LEVEL INTELLIGENCE:
@@ -452,7 +503,6 @@ async def generate_student_reply(
                - If the requested Language is "Bengali" → you MUST respond ONLY in Bengali using Bengali script. Do NOT use English words or Latin characters.
                - If the requested Language is "English" → respond in English.
                - Make sure the language of your response matches this requested Language perfectly. Do not let the teacher's language override this.
-
 
             Choose a suitable visual emotion status:
             - 'normal' (focused, listening)
@@ -466,20 +516,70 @@ async def generate_student_reply(
             {{
                 "responding_student": "{student_name}",
                 "response_text": "the student reply",
-                "emotion": "one of the emotions above"
+                "emotion": "one of the emotions above",
+                "attention_change": integer delta between -30 and +30 based on this turn,
+                "confidence_change": integer delta between -30 and +30 based on this turn,
+                "understanding_change": integer delta between -30 and +30 based on this turn,
+                "confusion_change": integer delta between -30 and +30 based on this turn,
+                "memory_update": "a single sentence summarizing what this student learned, felt, or remembered from the teacher's input and this reaction"
             }}
             """
             
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = model.generate_content(prompt)
-            print(f"[AI GENERATE] Raw Gemini Response: {response.text}")
-            cleaned_text = clean_json_response(response.text)
-            parsed = json.loads(cleaned_text)
-            print(f"[AI GENERATE] Parsed JSON Response: {parsed}")
-            return parsed
+            response_content = None
+            if HAS_API_KEY:
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                response = model.generate_content(prompt)
+                response_content = response.text
+                print(f"[AI GENERATE] Raw Gemini Response: {response_content}")
+            elif has_openrouter:
+                import httpx
+                print("[AI GENERATE] Attempting OpenRouter fallback model...")
+                headers = {
+                    "Authorization": f"Bearer {os.environ.get('OPENROUTER_API_KEY')}",
+                    "HTTP-Referer": "https://future-classroom-simulator.vercel.app",
+                    "Content-Type": "application/json"
+                }
+                json_data = {
+                    "model": "meta-llama/llama-3-8b-instruct:free",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.7
+                }
+                async with httpx.AsyncClient() as client:
+                    resp = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers=headers,
+                        json=json_data,
+                        timeout=30.0
+                    )
+                    if resp.status_code == 200:
+                        response_content = resp.json()["choices"][0]["message"]["content"]
+                        print(f"[AI GENERATE] Raw OpenRouter Response: {response_content}")
+                    else:
+                        raise Exception(f"OpenRouter API returned status {resp.status_code}: {resp.text}")
+
+            if response_content:
+                cleaned_text = clean_json_response(response_content)
+                parsed = json.loads(cleaned_text)
+                print(f"[AI GENERATE] Parsed JSON Response: {parsed}")
+
+                # Update database StudentState metrics based on AI deltas
+                state_rec.attention_level = max(0, min(100, state_rec.attention_level + parsed.get("attention_change", 0)))
+                state_rec.confidence_level = max(0, min(100, state_rec.confidence_level + parsed.get("confidence_change", 0)))
+                state_rec.understanding_level = max(0, min(100, state_rec.understanding_level + parsed.get("understanding_change", 0)))
+                state_rec.confusion_level = max(0, min(100, state_rec.confusion_level + parsed.get("confusion_change", 0)))
+                state_rec.participation_count += 1
+                if parsed.get("memory_update"):
+                    state_rec.memory_summary = parsed["memory_update"]
+                db.commit()
+
+                return {
+                    "responding_student": student_name,
+                    "response_text": parsed.get("response_text", ""),
+                    "emotion": parsed.get("emotion", "normal")
+                }
             
         except Exception as e:
-            print(f"Gemini API Error, falling back: {e}")
+            print(f"GenAI API Error, falling back: {e}")
             # fall through to fallback
 
     # Dynamic fallback responder incorporating subject, topic, and persona parameters
