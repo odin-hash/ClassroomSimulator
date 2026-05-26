@@ -2,19 +2,24 @@
 AI Intelligence Engine for Future Classroom Simulator.
 
 This module handles:
-- Personality-driven student response generation via Gemini 2.0 Flash
+- Personality-driven student response generation via LLM cascade
+- Provider chain: Gemini 2.0 Flash → Groq (Llama 3.3) → Ollama (local) → Templates
 - Structured memory management per student
 - Evidence-based teacher evaluation
 - Personality-aware fallback templates
 
-Uses the `google.genai` SDK (NOT the deprecated google.generativeai).
+Supported providers (set via environment variables):
+  GEMINI_API_KEY    → Google Gemini 2.0 Flash
+  GROQ_API_KEY      → Groq Cloud (Llama 3.3 70B)
+  OLLAMA_BASE_URL   → Ollama local server (default: http://localhost:11434)
 """
 
 import os
 import json
 import random
 import re
-from typing import Dict, Any, List, Optional
+import httpx
+from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session as DBSession
 from models import StudentState
 from personality import (
@@ -27,7 +32,7 @@ from personality import (
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# GEMINI CLIENT (Dynamic — checks env var every call, never frozen at startup)
+# PROVIDER CLIENTS
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _get_gemini_client():
@@ -39,12 +44,128 @@ def _get_gemini_client():
         from google import genai as google_genai
         return google_genai.Client(api_key=api_key)
     except Exception as e:
-        print(f"[Gemini Client Init Error]: {e}")
+        print(f"[Gemini] Client init error: {e}")
         return None
 
 
 def _has_api_key() -> bool:
     return bool(os.environ.get("GEMINI_API_KEY"))
+
+
+async def _call_gemini(prompt: str) -> Optional[str]:
+    """Call Gemini 2.0 Flash. Returns response text or None on failure."""
+    client = _get_gemini_client()
+    if not client:
+        return None
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+        )
+        text = response.text
+        if text:
+            print(f"[Gemini] ✓ Response received ({len(text)} chars)")
+        return text
+    except Exception as e:
+        print(f"[Gemini] ✗ Error: {e}")
+        return None
+
+
+async def _call_groq(prompt: str) -> Optional[str]:
+    """Call Groq API (Llama 3.3 70B). Returns response text or None on failure."""
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.8,
+                    "max_tokens": 300,
+                },
+                timeout=20.0,
+            )
+            if resp.status_code == 200:
+                text = resp.json()["choices"][0]["message"]["content"]
+                print(f"[Groq] ✓ Response received ({len(text)} chars)")
+                return text
+            else:
+                print(f"[Groq] ✗ HTTP {resp.status_code}: {resp.text[:200]}")
+                return None
+    except Exception as e:
+        print(f"[Groq] ✗ Error: {e}")
+        return None
+
+
+async def _call_ollama(prompt: str) -> Optional[str]:
+    """Call Ollama local server. Returns response text or None on failure."""
+    base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+    # Try common model names in order of preference
+    models = os.environ.get("OLLAMA_MODEL", "llama3.2,llama3.1,gemma2,mistral").split(",")
+
+    for model_name in models:
+        model_name = model_name.strip()
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    f"{base_url}/api/generate",
+                    json={
+                        "model": model_name,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.8,
+                            "num_predict": 300,
+                        },
+                    },
+                    timeout=30.0,
+                )
+                if resp.status_code == 200:
+                    text = resp.json().get("response", "")
+                    if text:
+                        print(f"[Ollama/{model_name}] ✓ Response received ({len(text)} chars)")
+                        return text
+                else:
+                    print(f"[Ollama/{model_name}] ✗ HTTP {resp.status_code}")
+                    continue
+        except httpx.ConnectError:
+            print(f"[Ollama] ✗ Server not running at {base_url}")
+            return None  # No point trying other models if server is down
+        except Exception as e:
+            print(f"[Ollama/{model_name}] ✗ Error: {e}")
+            continue
+
+    return None
+
+
+async def _call_llm_cascade(prompt: str) -> Tuple[Optional[str], str]:
+    """
+    Calls LLM providers in cascade order: Gemini → Groq → Ollama.
+    Returns (response_text, provider_name) or (None, "none").
+    """
+    # 1. Try Gemini first
+    result = await _call_gemini(prompt)
+    if result:
+        return result, "gemini"
+
+    # 2. Try Groq
+    result = await _call_groq(prompt)
+    if result:
+        return result, "groq"
+
+    # 3. Try Ollama (local)
+    result = await _call_ollama(prompt)
+    if result:
+        return result, "ollama"
+
+    return None, "none"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -476,10 +597,8 @@ async def generate_student_reply(
         student_states=all_states,
     )
 
-    # ── Try Gemini API ──
-    gemini_client = _get_gemini_client()
-
-    if gemini_client and personality_profile:
+    # ── Try LLM Cascade: Gemini → Groq → Ollama ──
+    if personality_profile:
         try:
             prompt = _build_personality_prompt(
                 student_name=student_name,
@@ -492,57 +611,54 @@ async def generate_student_reply(
                 session_info=session_info,
             )
 
-            print(f"[AI] Generating reply for {student_name} ({student_personality}) via Gemini...")
-            response = gemini_client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
-            )
-            response_content = response.text
-            print(f"[AI] Raw response: {response_content[:200]}...")
+            print(f"[AI] Generating reply for {student_name} ({student_personality})...")
+            response_content, provider = await _call_llm_cascade(prompt)
 
-            cleaned = clean_json_response(response_content)
-            parsed = json.loads(cleaned)
-            print(f"[AI] Parsed: student={student_name}, emotion={parsed.get('emotion')}, text={parsed.get('response_text', '')[:80]}...")
+            if response_content:
+                cleaned = clean_json_response(response_content)
+                parsed = json.loads(cleaned)
+                print(f"[AI] ✓ via {provider}: student={student_name}, emotion={parsed.get('emotion')}, text={parsed.get('response_text', '')[:80]}...")
 
-            # Update student state from AI deltas
-            state_rec.attention_level = max(0, min(100,
-                state_rec.attention_level + parsed.get("attention_change", 0)))
-            state_rec.confidence_level = max(0, min(100,
-                state_rec.confidence_level + parsed.get("confidence_change", 0)))
-            state_rec.understanding_level = max(0, min(100,
-                state_rec.understanding_level + parsed.get("understanding_change", 0)))
-            state_rec.confusion_level = max(0, min(100,
-                state_rec.confusion_level + parsed.get("confusion_change", 0)))
-            state_rec.participation_count += 1
+                # Update student state from AI deltas
+                state_rec.attention_level = max(0, min(100,
+                    state_rec.attention_level + parsed.get("attention_change", 0)))
+                state_rec.confidence_level = max(0, min(100,
+                    state_rec.confidence_level + parsed.get("confidence_change", 0)))
+                state_rec.understanding_level = max(0, min(100,
+                    state_rec.understanding_level + parsed.get("understanding_change", 0)))
+                state_rec.confusion_level = max(0, min(100,
+                    state_rec.confusion_level + parsed.get("confusion_change", 0)))
+                state_rec.participation_count += 1
 
-            # Update legacy memory summary
-            if parsed.get("memory_update"):
-                state_rec.memory_summary = parsed["memory_update"]
+                # Update legacy memory summary
+                if parsed.get("memory_update"):
+                    state_rec.memory_summary = parsed["memory_update"]
 
-            # Update structured memory
-            update_student_memory(
-                state=state_rec,
-                memory=memory,
-                response_text=parsed.get("response_text", ""),
-                teacher_message=teacher_message,
-                memory_update_text=parsed.get("memory_update", ""),
-                turn_number=turn_number,
-            )
+                # Update structured memory
+                update_student_memory(
+                    state=state_rec,
+                    memory=memory,
+                    response_text=parsed.get("response_text", ""),
+                    teacher_message=teacher_message,
+                    memory_update_text=parsed.get("memory_update", ""),
+                    turn_number=turn_number,
+                )
 
-            db.commit()
+                db.commit()
 
-            return {
-                "responding_student": student_name,
-                "response_text": parsed.get("response_text", ""),
-                "emotion": parsed.get("emotion", "normal"),
-            }
+                return {
+                    "responding_student": student_name,
+                    "response_text": parsed.get("response_text", ""),
+                    "emotion": parsed.get("emotion", "normal"),
+                }
 
+        except json.JSONDecodeError as e:
+            print(f"[AI] ✗ JSON parse error from {provider}: {e}")
         except Exception as e:
-            print(f"[AI] Gemini error for {student_name}, falling back: {e}")
-            # Fall through to fallback
+            print(f"[AI] ✗ LLM cascade error for {student_name}: {e}")
 
-    # ── Fallback: Personality-aware template responses ──
-    print(f"[AI] Using fallback for {student_name} (no API or error)")
+    # ── Final Fallback: Personality-aware template responses ──
+    print(f"[AI] Using template fallback for {student_name}")
     fallback = _generate_fallback_response(
         student_name=student_name,
         personality=student_personality,
@@ -675,11 +791,9 @@ async def generate_evaluation(
             "transcript_summary": f"Brief introduction for {subject} ({topic}). Teacher established positive rapport.",
         }
 
-    # Try Gemini
-    gemini_client = _get_gemini_client()
-    if gemini_client:
-        try:
-            prompt = f"""You are a B.Ed Teacher Training Assessor. Evaluate this virtual classroom session.
+    # Try LLM cascade for evaluation
+    try:
+        prompt = f"""You are a B.Ed Teacher Training Assessor. Evaluate this virtual classroom session.
 
 SESSION: {subject} — {topic} (Grade: {class_level})
 Objectives: {objectives}
@@ -726,15 +840,15 @@ Return ONLY raw JSON:
     "transcript_summary": "2-3 sentence factual summary"
 }}"""
 
-            response = gemini_client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
-            )
-            cleaned = clean_json_response(response.text)
-            return json.loads(cleaned)
+        response_content, provider = await _call_llm_cascade(prompt)
+        if response_content:
+            cleaned = clean_json_response(response_content)
+            result = json.loads(cleaned)
+            print(f"[Evaluation] ✓ via {provider}")
+            return result
 
-        except Exception as e:
-            print(f"[Evaluation] Gemini error: {e}")
+    except Exception as e:
+        print(f"[Evaluation] LLM cascade error: {e}")
 
     # ── Rule-based fallback using real metrics ──
     m = metrics
