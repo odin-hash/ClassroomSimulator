@@ -688,59 +688,6 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     setIsDrawing(false);
   };
 
-  const startDrawingTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas || e.touches.length === 0) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const touch = e.touches[0];
-    const x = (touch.clientX - rect.left) * scaleX;
-    const y = (touch.clientY - rect.top) * scaleY;
-
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    setIsDrawing(true);
-    
-    // Prevent default body scrolling while drawing on canvas
-    if (e.cancelable) {
-      e.preventDefault();
-    }
-  };
-
-  const drawTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || e.touches.length === 0) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const touch = e.touches[0];
-    const x = (touch.clientX - rect.left) * scaleX;
-    const y = (touch.clientY - rect.top) * scaleY;
-
-    ctx.lineWidth = isEraser ? 24 : penSize;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = isEraser ? chalkboardColor : penColor;
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    
-    // Prevent default body scrolling while drawing on canvas
-    if (e.cancelable) {
-      e.preventDefault();
-    }
-  };
-
 
   const clearBoard = () => {
     initCanvas();
