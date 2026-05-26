@@ -4,9 +4,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Path to the database file (load from environment variable for hosting, or fallback to local SQLite)
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./classroom.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL or not DATABASE_URL.strip():
+    DATABASE_URL = "sqlite:///./classroom.db"
 
 # Adjust connection settings based on the database driver
+if not (DATABASE_URL.startswith("sqlite") or DATABASE_URL.startswith("postgres") or DATABASE_URL.startswith("postgresql")):
+    print(f"[DB] WARNING: Invalid DATABASE_URL format. Falling back to local SQLite database.")
+    DATABASE_URL = "sqlite:///./classroom.db"
+
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         DATABASE_URL, connect_args={"check_same_thread": False}
