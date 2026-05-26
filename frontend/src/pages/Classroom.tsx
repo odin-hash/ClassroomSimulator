@@ -489,7 +489,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
           </svg>
         </button>
 
-        <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div className="classroom-header-title" style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
             {sessionDetails?.subject}: <span className="gradient-text">{sessionDetails?.topic}</span>
           </h2>

@@ -1750,7 +1750,8 @@ body {
     align-self: center !important;
   }
 
-  /* Subject & Topic Title Wrapper (2nd child) */
+  /* Subject & Topic Title Wrapper */
+  .classroom-header-title,
   .classroom-header > div:first-of-type {
     grid-column: 2 !important;
     grid-row: 1 !important;
@@ -1802,6 +1803,16 @@ body {
   /* Classroom general padding rules */
   .classroom-dimmed-layer {
     padding: 1rem !important;
+  }
+
+  /* Hide student filmstrip in whiteboard mode on mobile viewports */
+  .student-filmstrip {
+    display: none !important;
+  }
+
+  /* Hide grade level subtitle in header on mobile to prevent vertical misalignment */
+  .classroom-header p {
+    display: none !important;
   }
 
   /* 2-Column Seating Grid on Tablet/Large Phones */
@@ -1951,7 +1962,7 @@ body {
   }
 
   .classroom-header p {
-    font-size: 0.75rem !important;
+    display: none !important;
   }
   
   .floating-action-dock {
@@ -1988,7 +1999,7 @@ body {
   }
 
   .blackboard-canvas-container canvas {
-    height: 180px !important;
+    height: 160px !important; /* Extremely compact in portrait orientation to prevent vertical scrolling */
   }
 
   .blackboard-controls-dock {
@@ -2040,6 +2051,17 @@ body {
     .transcript-toggle-btn svg {
       margin-right: 0 !important;
     }
+  }
+}
+
+/* Custom Landscape Media Query for Mobile/Tablet to unlock a larger blackboard canvas when rotated */
+@media (max-width: 968px) and (orientation: landscape) {
+  .blackboard-canvas-container canvas {
+    height: 200px !important; /* Make it a bit bigger than portrait to leverage wider screen */
+  }
+  
+  .classroom-grid-layout {
+    padding-bottom: 4.5rem !important; /* Reduce bottom margin in landscape mode to save vertical space */
   }
 }
 
