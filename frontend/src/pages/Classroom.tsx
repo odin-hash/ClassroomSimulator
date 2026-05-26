@@ -835,8 +835,47 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
       setIsListening(true);
 
-      // 3. Set VAD checking loop
-      const threshold = 0.025; // Amplitude threshold (RMS)
+      // Start MediaRecorder IMMEDIATELY instead of waiting for a high silence threshold
+      audioChunksRef.current = [];
+      let options: MediaRecorderOptions = {};
+      if (MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/webm' };
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        options = { mimeType: 'audio/mp4' };
+      } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+        options = { mimeType: 'audio/ogg' };
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        console.log("[VAD] MediaRecorder stopped. Chunks:", audioChunksRef.current.length);
+        if (audioChunksRef.current.length === 0) return;
+        
+        const recordedType = mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
+        audioChunksRef.current = [];
+        
+        await uploadAndTranscribe(audioBlob, recordedType);
+      };
+
+      try {
+        mediaRecorder.start(100);
+        isRecordingRef.current = true;
+        console.log("[Mic] MediaRecorder started recording immediately.");
+      } catch (err) {
+        console.error("[Mic] Failed to start MediaRecorder:", err);
+      }
+
+      // 3. Set VAD checking loop (Only used to track speech presence and auto-submit after pause)
+      const threshold = 0.005; // Lowered amplitude threshold (highly responsive)
       const bufferLength = analyser.fftSize;
       const dataArray = new Uint8Array(bufferLength);
 
@@ -858,54 +897,13 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
         if (userIsSpeaking) {
           silenceStartRef.current = null;
-
-          if (!isRecordingRef.current) {
-            console.log("[VAD] Speech started (rms=" + rms.toFixed(4) + "), starting recording.");
-            audioChunksRef.current = [];
-
-            let options: MediaRecorderOptions = {};
-            if (MediaRecorder.isTypeSupported('audio/webm')) {
-              options = { mimeType: 'audio/webm' };
-            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-              options = { mimeType: 'audio/mp4' };
-            } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
-              options = { mimeType: 'audio/ogg' };
-            }
-
-            const mediaRecorder = new MediaRecorder(mediaStreamRef.current!, options);
-            mediaRecorderRef.current = mediaRecorder;
-
-            mediaRecorder.ondataavailable = (event) => {
-              if (event.data && event.data.size > 0) {
-                audioChunksRef.current.push(event.data);
-              }
-            };
-
-            mediaRecorder.onstop = async () => {
-              console.log("[VAD] MediaRecorder stopped. Chunks:", audioChunksRef.current.length);
-              if (audioChunksRef.current.length === 0) return;
-              
-              const recordedType = mediaRecorder.mimeType || 'audio/webm';
-              const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
-              audioChunksRef.current = [];
-              
-              await uploadAndTranscribe(audioBlob, recordedType);
-            };
-
-            try {
-              mediaRecorder.start(100);
-              isRecordingRef.current = true;
-            } catch (err) {
-              console.error("[VAD] Failed to start MediaRecorder:", err);
-            }
-          }
         } else {
           // If silence is detected and we are currently recording
           if (isRecordingRef.current) {
             if (silenceStartRef.current === null) {
               silenceStartRef.current = Date.now();
-            } else if (Date.now() - silenceStartRef.current > 1500) {
-              console.log("[VAD] Silence detected for 1.5s. Stopping recording to transcribe.");
+            } else if (Date.now() - silenceStartRef.current > 2000) {
+              console.log("[VAD] Silence detected for 2.0s. Stopping recording to transcribe.");
               if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
                 try {
                   mediaRecorderRef.current.stop();
