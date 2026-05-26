@@ -2110,22 +2110,12 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
     onShare(description);
   };
   return (
-    <div 
-      className="glass holographic-board" 
-      style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        padding: '1rem', 
-        gap: '0.75rem',
-        width: '100%',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+    <div className="glass holographic-board">
+      <div className="whiteboard-header">
+        <div className="whiteboard-header-left">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="btn-icon"
-            style={{ fontSize: '1rem', padding: '0.25rem', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="btn-icon whiteboard-collapse-btn"
             title={isExpanded ? "Collapse Board" : "Expand Board"}
             type="button"
           >
@@ -2135,7 +2125,7 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             )}
           </button>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <span className="whiteboard-title">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 9H3"/><path d="M21 15H3"/><path d="M12 3v18"/></svg>
             Whiteboard ({categoryName})
           </span>
@@ -2143,8 +2133,8 @@ export const Blackboard: React.FC<BlackboardProps> = ({ onShare, subject, topic 
         
         {/* Presets Selector Dropdown (Saves horizontal space) */}
         {isExpanded && presets.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Presets:</span>
+          <div className="whiteboard-presets-wrapper">
+            <span className="whiteboard-presets-label">Presets:</span>
             <select
               className="blackboard-presets-select"
               value={activePreset || ''}

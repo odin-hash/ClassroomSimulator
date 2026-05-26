@@ -522,9 +522,10 @@ export const Classroom: React.FC<ClassroomProps> = ({
           </button>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="classroom-header-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Countdown Clock */}
           <div 
+            className="classroom-timer-wrapper"
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -544,7 +545,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
           {/* Toggle Chat Drawer Button */}
           <button
-            className={`btn-secondary ${isChatOpen ? 'active' : ''}`}
+            className={`transcript-toggle-btn btn-secondary ${isChatOpen ? 'active' : ''}`}
             style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
             onClick={() => setIsChatOpen(!isChatOpen)}
             type="button"
@@ -557,7 +558,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
         </div>
       </div>
 
-      <div className="classroom-dimmed-layer" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, minHeight: 0, padding: '1.5rem 2.5rem 1.5rem 1.5rem' }}>
+      <div className="classroom-dimmed-layer">
         {/* Main Grid View */}
         <div className="classroom-grid-layout" style={{ gridTemplateColumns: '1fr' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
