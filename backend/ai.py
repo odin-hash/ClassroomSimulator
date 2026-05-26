@@ -173,11 +173,70 @@ async def _call_llm_cascade(prompt: str) -> Tuple[Optional[str], str]:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def clean_json_response(response_text: str) -> str:
-    """Cleans markdown formatting from Gemini outputs (e.g. ```json ... ```)."""
+    """
+    Extracts valid JSON from an LLM response that may include:
+    - Markdown code fences (```json ... ```)
+    - Explanatory text before/after the JSON
+    - Invalid JSON: +5 (should be 5), trailing commas, etc.
+    Works with Gemini, Groq (Llama), and Ollama outputs.
+    """
     cleaned = response_text.strip()
-    cleaned = re.sub(r"^```(?:json)?", "", cleaned)
-    cleaned = re.sub(r"```$", "", cleaned)
-    return cleaned.strip()
+
+    # 1. Strip markdown code fences
+    cleaned = re.sub(r"^```(?:json)?\s*\n?", "", cleaned)
+    cleaned = re.sub(r"\n?\s*```\s*$", "", cleaned)
+    cleaned = cleaned.strip()
+
+    # 2. Fix common LLM JSON quirks
+    #    - "+5" → "5" (Llama/Groq outputs positive integers with + prefix)
+    cleaned = re.sub(r':\s*\+(\d+)', r': \1', cleaned)
+    #    - Trailing commas before closing brace/bracket
+    cleaned = re.sub(r',\s*([}\]])', r'\1', cleaned)
+
+    # 3. Try parsing as-is first
+    try:
+        json.loads(cleaned)
+        return cleaned
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    # 4. Extract JSON object from surrounding text using brace matching
+    first_brace = cleaned.find("{")
+    if first_brace != -1:
+        depth = 0
+        in_string = False
+        escape_next = False
+        for i in range(first_brace, len(cleaned)):
+            c = cleaned[i]
+            if escape_next:
+                escape_next = False
+                continue
+            if c == "\\":
+                escape_next = True
+                continue
+            if c == '"' and not escape_next:
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = cleaned[first_brace:i + 1]
+                    # Apply fixes to extracted candidate too
+                    candidate = re.sub(r':\s*\+(\d+)', r': \1', candidate)
+                    candidate = re.sub(r',\s*([}\]])', r'\1', candidate)
+                    try:
+                        json.loads(candidate)
+                        return candidate
+                    except (json.JSONDecodeError, ValueError):
+                        pass
+                    break
+
+    # 5. Last resort: return cleaned text and let caller handle the error
+    return cleaned
 
 
 # ──────────────────────────────────────────────────────────────────────────────
