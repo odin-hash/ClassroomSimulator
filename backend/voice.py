@@ -82,17 +82,21 @@ VOICE_MODELS = {
 def get_piper_binary_path() -> str:
     """
     Returns the absolute path of the local precompiled piper binary.
-    Automatically downloads and extracts the correct macOS release if missing.
+    Automatically detects macOS vs Linux and downloads/extracts the correct release if missing.
     """
-    system = platform.system()
-    machine = platform.machine()
+    system = platform.system().lower()
+    machine = platform.machine().lower()
     
-    # Piper precompiled binaries are supported natively on macOS (darwin) and Linux.
-    # On Mac, we identify ARM64 (M1/M2/M3 Apple Silicon) vs x86_64 (Intel).
-    # Default to macOS structure.
-    is_arm = "arm" in machine.lower() or "aarch" in machine.lower()
+    # Detect CPU architecture (ARM64/Aarch64 vs Intel/AMD64)
+    is_arm = "arm" in machine or "aarch" in machine
     
-    archive_name = "piper_macos_aarch64.tar.gz" if is_arm else "piper_macos_x86_64.tar.gz"
+    # Dynamically select correct precompiled archive for the platform
+    if "darwin" in system:
+        archive_name = "piper_macos_aarch64.tar.gz" if is_arm else "piper_macos_x86_64.tar.gz"
+    else:
+        # Default to Linux binary (standard cloud hosting architecture)
+        archive_name = "piper_linux_aarch64.tar.gz" if is_arm else "piper_linux_x86_64.tar.gz"
+        
     download_url = f"https://github.com/rhasspy/piper/releases/download/v1.2.0/{archive_name}"
     
     piper_bin_dir = os.path.join(BIN_DIR, "piper")

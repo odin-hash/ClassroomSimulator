@@ -499,6 +499,17 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const handleSendTurn = async (messageText: string, addressedStudent?: string, actionType?: string) => {
     if (!messageText.trim() && !actionType) return;
     
+    // Proactively trigger a silent speech utterance to unlock Safari SpeechSynthesis on user gesture
+    if ('speechSynthesis' in window) {
+      try {
+        const u = new SpeechSynthesisUtterance(' ');
+        u.volume = 0;
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        console.warn("[SpeechSynthesis Proactive Unlock] Failed:", e);
+      }
+    }
+
     setIsPending(true);
     if (addressedStudent) {
       setPendingStudent(addressedStudent);
@@ -652,6 +663,17 @@ export const Classroom: React.FC<ClassroomProps> = ({
     if (!recognitionRef.current) {
       alert('Speech Recognition is not supported by your browser. Please use Chrome, Edge, or Safari, or type in the input box.');
       return;
+    }
+
+    // Proactively trigger a silent speech utterance to unlock Safari SpeechSynthesis on user gesture
+    if ('speechSynthesis' in window) {
+      try {
+        const u = new SpeechSynthesisUtterance(' ');
+        u.volume = 0;
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        console.warn("[SpeechSynthesis Proactive Unlock] Failed:", e);
+      }
     }
 
     if (isListening) {
