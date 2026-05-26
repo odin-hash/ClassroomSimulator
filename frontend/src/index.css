@@ -401,7 +401,7 @@ body {
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: 1.5rem;
-  padding: 1.5rem;
+  padding: 3.5rem 1.5rem 1.5rem 1.5rem; /* Increased top padding to give top-row speech bubbles ample clearance */
   background: transparent !important;
   border: none !important;
   border-radius: 0;
@@ -458,6 +458,7 @@ body {
   border-color: #2563eb !important;
   border-width: 1px;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15), var(--card-shadow);
+  z-index: 96; /* Set active card z-index higher than sticky header (95) so speech bubbles aren't clipped */
 }
 
 .student-avatar-container {
@@ -529,7 +530,7 @@ body {
   min-width: 120px;
   text-align: center;
   box-shadow: var(--card-shadow);
-  z-index: 10;
+  z-index: 110; /* Set active speech bubble z-index much higher than header (95) as secondary layout protection */
   display: block;
   animation: pop-up 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -2081,6 +2082,7 @@ body {
   transform: translateY(-2px);
   background: var(--bg-primary) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  z-index: 96; /* Primary active speaker layer positioning */
 }
 
 .student-avatar-wrapper.active-speaker-ring {
