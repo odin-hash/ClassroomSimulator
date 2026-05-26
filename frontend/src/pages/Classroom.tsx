@@ -162,31 +162,84 @@ export const Classroom: React.FC<ClassroomProps> = ({
   }, [language]);
 
   // 5. Text-To-Speech (TTS) Voice Handler
-  const speakStudentResponse = (text: string) => {
+  const speakStudentResponse = (text: string, studentName: string) => {
     if ('speechSynthesis' in window) {
       // Cancel previous speakings
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
       
-      // Try to find matching system voices
+      // Scrape available system voices
       const voices = window.speechSynthesis.getVoices();
-      let targetVoice = null;
-
+      
+      // Filter voices by language
+      let matchingVoices = [];
       if (language === 'Hindi') {
-        targetVoice = voices.find((v) => v.lang.startsWith('hi'));
-        utterance.rate = 0.9;
+        matchingVoices = voices.filter((v) => v.lang.startsWith('hi'));
       } else if (language === 'Bengali') {
-        targetVoice = voices.find((v) => v.lang.startsWith('bn'));
-        utterance.rate = 0.9;
+        matchingVoices = voices.filter((v) => v.lang.startsWith('bn'));
       } else {
-        targetVoice = voices.find((v) => v.lang.startsWith('en'));
-        utterance.rate = 1.0;
+        matchingVoices = voices.filter((v) => v.lang.startsWith('en'));
       }
 
+      // Sort matching voices to prioritize high-fidelity "Google" or "Natural" neural voices
+      matchingVoices.sort((a, b) => {
+        const aGoogle = a.name.toLowerCase().includes('google');
+        const bGoogle = b.name.toLowerCase().includes('google');
+        const aNatural = a.name.toLowerCase().includes('natural');
+        const bNatural = b.name.toLowerCase().includes('natural');
+        
+        if ((aGoogle || aNatural) && !(bGoogle || bNatural)) return -1;
+        if (!(aGoogle || aNatural) && (bGoogle || bNatural)) return 1;
+        return 0;
+      });
+
+      const targetVoice = matchingVoices[0] || null;
       if (targetVoice) {
         utterance.voice = targetVoice;
       }
+
+      // Personalized vocal personas using pitch and rate parameters for the 6 students
+      let pitch = 1.0;
+      let rate = 1.0;
+
+      switch (studentName) {
+        case 'Aarav': // Curious (Male)
+          pitch = 0.9;
+          rate = 0.95;
+          break;
+        case 'Ananya': // Shy (Female)
+          pitch = 1.25;
+          rate = 0.82;
+          break;
+        case 'Vihaan': // Distracted (Male)
+          pitch = 1.0;
+          rate = 1.05;
+          break;
+        case 'Ishaan': // Hyperactive (Male)
+          pitch = 1.1;
+          rate = 1.22;
+          break;
+        case 'Riya': // Weak Learner (Female)
+          pitch = 1.18;
+          rate = 0.88;
+          break;
+        case 'Kabir': // Overconfident (Male)
+          pitch = 0.95;
+          rate = 1.12;
+          break;
+        default:
+          pitch = 1.0;
+          rate = 1.0;
+      }
+
+      // Secondary pacing corrections for Hindi/Bengali speech synthesizers
+      if (language === 'Hindi' || language === 'Bengali') {
+        rate *= 0.9;
+      }
+
+      utterance.pitch = pitch;
+      utterance.rate = rate;
 
       window.speechSynthesis.speak(utterance);
     }
@@ -300,7 +353,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
         });
 
         // Trigger TTS to voice the student response
-        speakStudentResponse(reply.message_text);
+        speakStudentResponse(reply.message_text, reply.sender_name);
 
         // Clear active speaker bubble text after 5 seconds
         setTimeout(() => {

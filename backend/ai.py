@@ -286,6 +286,78 @@ async def generate_student_reply(
     """
     Generates a student response. Calls Gemini API if available, else falls back to dynamic rule-based logic.
     """
+    # Clean up the teacher message to check for simple greetings
+    t_msg_clean = teacher_message.lower().strip("?!., ")
+    
+    # Common classroom greetings
+    greetings = [
+        "good morning", "good afternoon", "good evening", "hello", "hi", "hey",
+        "suprabhat", "namaste", "namaskar", "pranam", "shubho shokal", "suprabhath",
+        "shuvo sokal", "how are you", "kemon acho", "aap kaise hain"
+    ]
+    
+    # Check if teacher message is primarily a short greeting
+    is_greeting = False
+    for g in greetings:
+        if g in t_msg_clean and len(t_msg_clean) < len(g) + 12:
+            is_greeting = True
+            break
+            
+    if is_greeting:
+        # Personalized student greeting replies based on language and persona
+        t_clean = topic.strip()
+        
+        if language == "Hindi":
+            if student_name == "Aarav":
+                reply_text = f"सुप्रभात शिक्षक! मैं आज के विषय {t_clean} के बारे में पढ़ रहा था, यह बहुत दिलचस्प लग रहा है!"
+            elif student_name == "Ananya":
+                reply_text = "नमस्ते सर/मैम... (धीरे से सिर झुकाती है)"
+            elif student_name == "Vihaan":
+                reply_text = "ओह! सुप्रभात शिक्षक जी! (जल्दी से अपनी डेस्क साफ करता है और पेंसिल उठाता है)"
+            elif student_name == "Ishaan":
+                reply_text = f"नमस्ते शिक्षक जी! सुप्रभात! आज हम {t_clean} में क्या नया प्रयोग करने वाले हैं? मुझे बहुत उत्सुकता है!"
+            elif student_name == "Riya":
+                reply_text = f"सुप्रभात सर/मैम! कृपया आज थोड़ा धीरे पढ़ाइएगा, {t_clean} मुझे थोड़ा कठिन लगता है।"
+            else: # Kabir
+                reply_text = f"सुप्रभात शिक्षक जी! मैंने {t_clean} को कल रात ही पूरा पढ़ लिया था, आप कोई भी सवाल पूछ सकते हैं!"
+            emotion = "normal" if student_name != "Ishaan" else "questioning"
+            
+        elif language == "Bengali":
+            if student_name == "Aarav":
+                reply_text = f"শুভ সকাল শিক্ষক মহাশয়! আমি আজকের বিষয় {t_clean} নিয়ে পড়ছিলাম, এটি খুব আকর্ষণীয় মনে হচ্ছে!"
+            elif student_name == "Ananya":
+                reply_text = "নমস্কার স্যার... (ধীরে ধীরে মাথা নিচু করে)"
+            elif student_name == "Vihaan":
+                reply_text = "ওহ! শুভ সকাল স্যার! (তাড়াতাড়ি নিজের খাতা বন্ধ করে সোজা হয়ে বসে)"
+            elif student_name == "Ishaan":
+                reply_text = f"শুভ সকাল স্যার! নমস্কার! আজ আমরা {t_clean} নিয়ে কী নতুন খেলা বা পরীক্ষা করব স্যার? আমি খুব এক্সাইটেড!"
+            elif student_name == "Riya":
+                reply_text = f"শুভ সকাল স্যার/ম্যাডাম! আশা করি আজকের ক্লাসটা খুব কঠিন হবে না, {t_clean} আমার একটু কঠিন লাগে।"
+            else: # Kabir
+                reply_text = f"শুভ সকাল স্যার! আমি {t_clean} চ্যাপ্টারটা গতকাল রাতেই পুরো মুখস্থ করে নিয়েছি, আপনি যেকোনো প্রশ্ন করতে পারেন!"
+            emotion = "normal" if student_name != "Ishaan" else "questioning"
+            
+        else: # English / default
+            if student_name == "Aarav":
+                reply_text = f"Good morning, teacher! I was looking at our topic, {t_clean}, and it seems really interesting. Can't wait to start!"
+            elif student_name == "Ananya":
+                reply_text = "Good morning, teacher... (nods softly)"
+            elif student_name == "Vihaan":
+                reply_text = "Oh, good morning, teacher! (scrambles to close his sketchpad)"
+            elif student_name == "Ishaan":
+                reply_text = f"Good morning, teacher! I'm super excited! What are we going to build or draw first today for {t_clean}?!"
+            elif student_name == "Riya":
+                reply_text = f"Good morning, teacher! I hope we can go a little slow today, I'm a bit nervous about {t_clean}."
+            else: # Kabir
+                reply_text = f"Good morning, teacher! I've already mastered today's lesson on {t_clean}, but I'm ready to show you!"
+            emotion = "normal" if student_name != "Ishaan" else "questioning"
+            
+        return {
+            "responding_student": student_name,
+            "response_text": reply_text,
+            "emotion": emotion
+        }
+
     if HAS_API_KEY:
         try:
             # Structure conversation history for prompt context
