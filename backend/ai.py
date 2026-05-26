@@ -392,6 +392,7 @@ async def generate_student_reply(
         }
 
     if HAS_API_KEY:
+        print(f"[AI GENERATE] Generating student reply for student: {student_name}, language: {language}")
         try:
             # Structure conversation history for prompt context
             history_str = ""
@@ -465,8 +466,11 @@ async def generate_student_reply(
             
             model = genai.GenerativeModel("gemini-2.5-flash")
             response = model.generate_content(prompt)
+            print(f"[AI GENERATE] Raw Gemini Response: {response.text}")
             cleaned_text = clean_json_response(response.text)
-            return json.loads(cleaned_text)
+            parsed = json.loads(cleaned_text)
+            print(f"[AI GENERATE] Parsed JSON Response: {parsed}")
+            return parsed
             
         except Exception as e:
             print(f"Gemini API Error, falling back: {e}")

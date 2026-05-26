@@ -205,6 +205,7 @@ async def process_teacher_turn(
                         responding_student_info = s
 
     # 5. Generate Response Text via LLM (or fallback)
+    print(f"[TURN PROCESS] Session ID: {session_id}, Session Language from DB: {db_session.language}")
     student_reply = await generate_student_reply(
         subject=db_session.subject,
         topic=db_session.topic,
