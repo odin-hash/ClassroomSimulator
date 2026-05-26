@@ -34,8 +34,30 @@ from personality import (
 from fastapi.responses import FileResponse
 from voice import generate_speech_audio
 
-# Initialize SQLite database tables
+# Initialize database tables
 Base.metadata.create_all(bind=engine)
+
+# Auto-migrate: Ensure newly added columns exist in deployed database (e.g. Postgres on Render)
+from sqlalchemy import text
+try:
+    with engine.begin() as conn:
+        for table, col_name, col_type in [
+            ("student_states", "curiosity_level", "INTEGER DEFAULT 50"),
+            ("student_states", "interrupt_probability", "INTEGER DEFAULT 20"),
+            ("student_states", "memory_json", "TEXT"),
+            ("sessions", "language", "VARCHAR(50) DEFAULT 'English'"),
+            ("sessions", "lesson_objectives", "TEXT"),
+            ("sessions", "teaching_method", "VARCHAR(100)"),
+            ("session_messages", "student_personality", "VARCHAR(100)"),
+        ]:
+            try:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}"))
+                print(f"[DB] Added column {col_name} to {table}.")
+            except Exception:
+                # Column likely already exists or table doesn't exist yet
+                pass
+except Exception as db_err:
+    print(f"[DB] Auto-migration helper warning: {db_err}")
 
 app = FastAPI(title="Future Classroom Simulator API")
 
