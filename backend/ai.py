@@ -503,6 +503,7 @@ async def generate_student_reply(
                - If the requested Language is "Bengali" → you MUST respond ONLY in Bengali using Bengali script. Do NOT use English words or Latin characters.
                - If the requested Language is "English" → respond in English.
                - Make sure the language of your response matches this requested Language perfectly. Do not let the teacher's language override this.
+            8. **AVOID REPETITION:** Check the CONVERSATION HISTORY carefully. Do NOT repeat the same statements, questions, replies, or sentence structures that you or other students have said in recent turns. Introduce variety to keep the dialogue fresh and natural.
 
             Choose a suitable visual emotion status:
             - 'normal' (focused, listening)

@@ -75,6 +75,10 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes default in seconds
   const [timerActive, setTimerActive] = useState(true);
 
+  // STT configuration and Native SpeechRecognition Fallback
+  const [hasSttKeys, setHasSttKeys] = useState<boolean>(true);
+  const recognitionRef = useRef<any>(null);
+
   // Audio queue and volume states for premium neural voice playback
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.85);
@@ -84,6 +88,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const originalEmotionsRef = useRef<Record<string, string>>({});
   const wasMicEnabledRef = useRef(false);
   const handleSendTurnRef = useRef<any>(null);
+  const isTurnProcessingRef = useRef(false);
   const activeUtteranceRef = useRef<any>(null);
 
   // VAD and MediaRecorder state/refs
@@ -120,6 +125,17 @@ export const Classroom: React.FC<ClassroomProps> = ({
         setMessages(data.messages || []);
         setTimeLeft(data.duration_minutes * 60);
       });
+
+    // Fetch STT keys availability configuration
+    fetch(`${API_BASE_URL}/api/config`)
+      .then((res) => res.json())
+      .then((data) => {
+        setHasSttKeys(!!data.has_stt_keys);
+      })
+      .catch((err) => {
+        console.warn("Failed to fetch API config, defaulting to server transcription:", err);
+        setHasSttKeys(true);
+      });
   }, [sessionId]);
 
   // 2. Ticking Countdown Timer
@@ -152,6 +168,60 @@ export const Classroom: React.FC<ClassroomProps> = ({
       }
     };
   }, []);
+
+  // 4b. Initialize Native Speech Recognition Fallback (used when no server STT keys exist)
+  useEffect(() => {
+    if (hasSttKeys) {
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      
+      if (language === 'Hindi') {
+        rec.lang = 'hi-IN';
+      } else if (language === 'Bengali') {
+        rec.lang = 'bn-IN';
+      } else {
+        rec.lang = 'en-US';
+      }
+
+      rec.onstart = () => {
+        setIsListening(true);
+      };
+
+      rec.onresult = (event: any) => {
+        const transcriptText = event.results[0][0].transcript;
+        setTeacherInput(transcriptText);
+        if (transcriptText.trim()) {
+          console.info("[Native Mic Auto-Send] Speech recognized:", transcriptText);
+          handleSendTurnRef.current?.(transcriptText);
+        }
+      };
+
+      rec.onerror = (e: any) => {
+        console.error('Native speech recognition error:', e);
+        setIsListening(false);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = rec;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {}
+      }
+    };
+  }, [language, hasSttKeys]);
 
   // iOS Safari touch audio context & SpeechSynthesis unlocker
   useEffect(() => {
@@ -225,6 +295,13 @@ export const Classroom: React.FC<ClassroomProps> = ({
     isRecordingRef.current = false;
     silenceStartRef.current = null;
 
+    // Ensure native speech recognition is aborted to avoid picking up student voice output
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {}
+    }
+
     isAudioPlayingRef.current = true;
     const { text, studentName, emotion } = audioQueueRef.current[0];
 
@@ -270,7 +347,16 @@ export const Classroom: React.FC<ClassroomProps> = ({
         isAudioPlayingRef.current = false;
         // Resume voice recognition if it was enabled
         if (wasMicEnabledRef.current) {
-          console.info("[Mic Auto-Resume] Audio queue empty. VAD listening automatically resumed.");
+          if (hasSttKeys) {
+            console.info("[Mic Auto-Resume] Audio queue empty. VAD listening automatically resumed.");
+          } else if (recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+              console.info("[Mic Auto-Resume] Audio queue empty. Native listening resumed.");
+            } catch (e) {
+              console.warn("[Mic Auto-Resume] Failed to resume native listening:", e);
+            }
+          }
         }
       } else {
         processAudioQueue();
@@ -286,6 +372,27 @@ export const Classroom: React.FC<ClassroomProps> = ({
     }
 
     // Try playing neural voice from Edge TTS backend
+    let fallbackTriggered = false;
+    let hasStartedPlaying = false;
+    const triggerFallback = (reason: string) => {
+      if (fallbackTriggered || hasStartedPlaying) return;
+      fallbackTriggered = true;
+      console.warn(`[TTS Fallback] Triggered fallback due to: ${reason}`);
+      
+      if (currentAudioRef.current) {
+        try {
+          currentAudioRef.current.pause();
+          currentAudioRef.current.onended = null;
+          currentAudioRef.current.onerror = null;
+          currentAudioRef.current.onplay = null;
+          currentAudioRef.current.onplaying = null;
+        } catch (e) {}
+        currentAudioRef.current = null;
+      }
+      
+      playBrowserSpeechFallback(text, studentName, handleSpeechEnded);
+    };
+
     try {
       const audioUrl = `${API_BASE_URL}/api/tts?text=${encodeURIComponent(text)}&student=${encodeURIComponent(studentName)}&language=${encodeURIComponent(language)}`;
       const audio = new Audio(audioUrl);
@@ -293,7 +400,11 @@ export const Classroom: React.FC<ClassroomProps> = ({
       audio.volume = volume;
 
       audio.onplay = () => {
-        // Keeping student's original emotion without loop talking mouth animations
+        hasStartedPlaying = true;
+      };
+
+      audio.onplaying = () => {
+        hasStartedPlaying = true;
       };
 
       audio.onended = () => {
@@ -301,15 +412,13 @@ export const Classroom: React.FC<ClassroomProps> = ({
       };
 
       audio.onerror = () => {
-        // Fallback to browser SpeechSynthesis if Edge TTS backend fails
-        console.warn("[TTS Fallback] Edge TTS failed, routing to browser SpeechSynthesis...");
-        playBrowserSpeechFallback(text, studentName, handleSpeechEnded);
+        triggerFallback("audio.onerror");
       };
 
       await audio.play();
     } catch (err) {
-      console.warn("[TTS Play Error] Piper play rejected, routing to fallback:", err);
-      playBrowserSpeechFallback(text, studentName, handleSpeechEnded);
+      console.warn("[TTS Play Error] Play promise rejected:", err);
+      triggerFallback("play promise catch");
     }
   };
 
@@ -466,7 +575,13 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
   // 6. Handle sending dialogue (turns) to backend
   const handleSendTurn = async (messageText: string, addressedStudent?: string, actionType?: string) => {
+    if (isPending || isTurnProcessingRef.current) {
+      console.warn("[handleSendTurn] Ignored duplicate turn submission: already processing.");
+      return;
+    }
     if (!messageText.trim() && !actionType) return;
+
+    isTurnProcessingRef.current = true;
     
     // Proactively trigger a silent speech utterance to unlock Safari SpeechSynthesis on user gesture
     if ('speechSynthesis' in window) {
@@ -487,11 +602,17 @@ export const Classroom: React.FC<ClassroomProps> = ({
     }
     setTeacherInput('');
     if (isListening) {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        try { mediaRecorderRef.current.stop(); } catch (e) {}
+      if (hasSttKeys) {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+          try { mediaRecorderRef.current.stop(); } catch (e) {}
+        }
+        isRecordingRef.current = false;
+        silenceStartRef.current = null;
+      } else {
+        if (recognitionRef.current) {
+          try { recognitionRef.current.stop(); } catch (e) {}
+        }
       }
-      isRecordingRef.current = false;
-      silenceStartRef.current = null;
     }
 
     // Add local optimistic teacher message to transcripts
@@ -604,6 +725,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
     } catch (error) {
       console.error('Error submitting teacher input:', error);
     } finally {
+      isTurnProcessingRef.current = false;
       setIsPending(false);
       setPendingStudent(null);
     }
@@ -807,12 +929,26 @@ export const Classroom: React.FC<ClassroomProps> = ({
       }
     }
 
-    if (isListening) {
-      wasMicEnabledRef.current = false;
-      cleanupVAD();
+    if (hasSttKeys) {
+      if (isListening) {
+        wasMicEnabledRef.current = false;
+        cleanupVAD();
+      } else {
+        wasMicEnabledRef.current = true;
+        startVAD();
+      }
     } else {
-      wasMicEnabledRef.current = true;
-      startVAD();
+      if (!recognitionRef.current) {
+        alert('Speech Recognition is not supported by your browser. Please use Chrome, Edge, or Safari, or type in the input box.');
+        return;
+      }
+      if (isListening) {
+        wasMicEnabledRef.current = false;
+        try { recognitionRef.current.stop(); } catch (e) {}
+      } else {
+        wasMicEnabledRef.current = true;
+        try { recognitionRef.current.start(); } catch (e) {}
+      }
     }
   };
 

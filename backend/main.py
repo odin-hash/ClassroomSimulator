@@ -503,7 +503,30 @@ async def transcribe_speech(file: UploadFile = File(...)):
     
     errors = []
     
-    # 1. Google Speech-to-Text (Primary)
+    # 0. Gemini Speech-to-Text (Primary)
+    if os.environ.get("GEMINI_API_KEY"):
+        try:
+            print("[STT] Attempting Gemini Speech-to-Text...")
+            import google.generativeai as genai
+            genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            response = model.generate_content([
+                {
+                    "mime_type": "audio/webm",
+                    "data": audio_content
+                },
+                "Transcribe this audio. Output only the exact transcribed text, with no extra annotations, prefixes, or commentary. If the audio is empty or contains only noise/silence, output an empty string."
+            ])
+            result = response.text.strip()
+            if result:
+                print(f"[STT] Gemini STT Success: '{result}'")
+                return {"text": result, "provider": "gemini"}
+        except Exception as e:
+            err_msg = f"Gemini STT Error: {e}"
+            print(f"[STT] {err_msg}")
+            errors.append(err_msg)
+            
+    # 1. Google Speech-to-Text (Secondary)
     if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or os.environ.get("GOOGLE_API_KEY"):
         try:
             print("[STT] Attempting Google Cloud Speech-to-Text...")
@@ -550,4 +573,19 @@ async def transcribe_speech(file: UploadFile = File(...)):
         status_code=500,
         detail=f"Speech recognition could not be performed. Errors: {errors}"
     )
+
+
+@app.get("/api/config")
+async def get_config():
+    """
+    Returns configuration status, such as whether speech-to-text API keys are configured.
+    """
+    has_keys = bool(
+        os.environ.get("GEMINI_API_KEY") or
+        os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or
+        os.environ.get("GOOGLE_API_KEY") or
+        os.environ.get("DEEPGRAM_API_KEY") or
+        os.environ.get("ASSEMBLYAI_API_KEY")
+    )
+    return {"has_stt_keys": has_keys}
 
