@@ -25,6 +25,8 @@ from schemas import (
 )
 from simulation import STUDENTS, CLASSROOM_EVENTS, select_responding_student, trigger_random_event
 from ai import generate_student_reply, generate_evaluation
+from fastapi.responses import FileResponse
+from voice import generate_speech_audio
 
 # Initialize SQLite database tables
 Base.metadata.create_all(bind=engine)
@@ -296,3 +298,23 @@ def get_session_analytics(session_id: int, db: Session = Depends(get_db)):
     if not analytics:
         raise HTTPException(status_code=404, detail="Analytics not found. Call /api/sessions/{id}/end first.")
     return analytics
+
+
+@app.get("/api/tts")
+async def text_to_speech(text: str, student: str):
+    """
+    Synthesizes and streams the spoken audio wave file for the student and text.
+    Handles caching, on-demand binaries download, and fallback.
+    """
+    if not text.strip() or not student.strip():
+        raise HTTPException(status_code=400, detail="Missing required 'text' or 'student' query parameters.")
+    try:
+        audio_path = generate_speech_audio(text, student)
+        if os.path.isfile(audio_path):
+            return FileResponse(audio_path, media_type="audio/wav", filename=os.path.basename(audio_path))
+        else:
+            raise HTTPException(status_code=500, detail="Generated audio file could not be verified on disk.")
+    except Exception as e:
+        print(f"TTS API Endpoint Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

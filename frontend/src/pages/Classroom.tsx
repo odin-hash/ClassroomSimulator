@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { TRANSLATIONS } from '../localization';
 import type { Language } from '../localization';
 import { StudentCard } from '../components/StudentCard';
+import { VolumeControl } from '../components/VolumeControl';
 import { EventPopup } from '../components/EventPopup';
 import { Blackboard } from '../components/Blackboard';
 import { API_BASE_URL } from '../config';
@@ -76,6 +77,14 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
   // Speech Recognition reference
   const recognitionRef = useRef<any>(null);
+
+  // Audio queue and volume states for premium neural voice playback
+  const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(0.85);
+  const audioQueueRef = useRef<{ text: string; studentName: string; emotion: string }[]>([]);
+  const isAudioPlayingRef = useRef(false);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const originalEmotionsRef = useRef<Record<string, string>>({});
 
   // 1. Fetch Session Info & Students list
   useEffect(() => {
@@ -161,88 +170,190 @@ export const Classroom: React.FC<ClassroomProps> = ({
     };
   }, [language]);
 
-  // 5. Text-To-Speech (TTS) Voice Handler
-  const speakStudentResponse = (text: string, studentName: string) => {
-    if ('speechSynthesis' in window) {
-      // Cancel previous speakings
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Scrape available system voices
-      const voices = window.speechSynthesis.getVoices();
-      
-      // Filter voices by language
-      let matchingVoices = [];
-      if (language === 'Hindi') {
-        matchingVoices = voices.filter((v) => v.lang.startsWith('hi'));
-      } else if (language === 'Bengali') {
-        matchingVoices = voices.filter((v) => v.lang.startsWith('bn'));
-      } else {
-        matchingVoices = voices.filter((v) => v.lang.startsWith('en'));
-      }
-
-      // Sort matching voices to prioritize high-fidelity "Google" or "Natural" neural voices
-      matchingVoices.sort((a, b) => {
-        const aGoogle = a.name.toLowerCase().includes('google');
-        const bGoogle = b.name.toLowerCase().includes('google');
-        const aNatural = a.name.toLowerCase().includes('natural');
-        const bNatural = b.name.toLowerCase().includes('natural');
-        
-        if ((aGoogle || aNatural) && !(bGoogle || bNatural)) return -1;
-        if (!(aGoogle || aNatural) && (bGoogle || bNatural)) return 1;
-        return 0;
-      });
-
-      const targetVoice = matchingVoices[0] || null;
-      if (targetVoice) {
-        utterance.voice = targetVoice;
-      }
-
-      // Personalized vocal personas using pitch and rate parameters for the 6 students
-      let pitch = 1.0;
-      let rate = 1.0;
-
-      switch (studentName) {
-        case 'Aarav': // Curious (Male)
-          pitch = 0.9;
-          rate = 0.95;
-          break;
-        case 'Ananya': // Shy (Female)
-          pitch = 1.25;
-          rate = 0.82;
-          break;
-        case 'Vihaan': // Distracted (Male)
-          pitch = 1.0;
-          rate = 1.05;
-          break;
-        case 'Ishaan': // Hyperactive (Male)
-          pitch = 1.1;
-          rate = 1.22;
-          break;
-        case 'Riya': // Weak Learner (Female)
-          pitch = 1.18;
-          rate = 0.88;
-          break;
-        case 'Kabir': // Overconfident (Male)
-          pitch = 0.95;
-          rate = 1.12;
-          break;
-        default:
-          pitch = 1.0;
-          rate = 1.0;
-      }
-
-      // Secondary pacing corrections for Hindi/Bengali speech synthesizers
-      if (language === 'Hindi' || language === 'Bengali') {
-        rate *= 0.9;
-      }
-
-      utterance.pitch = pitch;
-      utterance.rate = rate;
-
-      window.speechSynthesis.speak(utterance);
+  // 5. Text-To-Speech (TTS) Voice Handler with Queuing & Piper Backend Support
+  const speakStudentResponse = (text: string, studentName: string, emotion: string) => {
+    // Queue the spoken item
+    audioQueueRef.current.push({ text, studentName, emotion });
+    
+    // If not already playing, start the playback process immediately
+    if (!isAudioPlayingRef.current) {
+      processAudioQueue();
     }
+  };
+
+  // Core TTS queue play coordinator
+  const processAudioQueue = async () => {
+    if (audioQueueRef.current.length === 0) {
+      isAudioPlayingRef.current = false;
+      return;
+    }
+
+    isAudioPlayingRef.current = true;
+    const { text, studentName, emotion } = audioQueueRef.current[0];
+
+    // 1. Temporarily save the student's emotion to restore later, and trigger 'talking' animation
+    setStudentEmotions((prev) => {
+      const restored = { ...prev };
+      // Save the target emotion (the one they got from Gemini) so we can return to it later
+      originalEmotionsRef.current[studentName] = emotion;
+      restored[studentName] = 'talking';
+      return restored;
+    });
+    
+    // Trigger active speaker bubble in the UI
+    setActiveSpeaker(studentName);
+    setActiveSpeakerText(text);
+
+    // Helper to cleanup and play next
+    const handleSpeechEnded = () => {
+      // Restore student's emotion back to their post-response baseline
+      setStudentEmotions((prev) => {
+        const restored = { ...prev };
+        restored[studentName] = originalEmotionsRef.current[studentName] || 'normal';
+        return restored;
+      });
+      
+      // Clear active speaker bubble after a short delay
+      setTimeout(() => {
+        setActiveSpeakerText((prevText) => {
+          if (prevText === text) {
+            setActiveSpeaker(null);
+            return null;
+          }
+          return prevText;
+        });
+      }, 1500);
+
+      // De-queue the spoken item and recurse to play the next one
+      audioQueueRef.current.shift();
+      processAudioQueue();
+    };
+
+    // If muted, just bypass audio playing instantly but keep the text/animation triggers flowing for realism
+    if (isMuted) {
+      // Simulate speaking time by calculating average reading speed (~180ms per word)
+      const speakDelay = Math.max(1200, text.split(' ').length * 180);
+      setTimeout(handleSpeechEnded, speakDelay);
+      return;
+    }
+
+    // Try playing local neural voice from our offline backend Piper TTS
+    try {
+      const audioUrl = `${API_BASE_URL}/api/tts?text=${encodeURIComponent(text)}&student=${encodeURIComponent(studentName)}`;
+      const audio = new Audio(audioUrl);
+      currentAudioRef.current = audio;
+      audio.volume = volume;
+
+      audio.onplay = () => {
+        // Ensure mouth animation is set to 'talking'
+        setStudentEmotions((prev) => ({ ...prev, [studentName]: 'talking' }));
+      };
+
+      audio.onended = () => {
+        handleSpeechEnded();
+      };
+
+      audio.onerror = () => {
+        // Fallback to browser SpeechSynthesis if the local Piper server fails
+        console.warn("[TTS Platform Fallback] Piper failed, routing to browser SpeechSynthesis...");
+        playBrowserSpeechFallback(text, studentName, handleSpeechEnded);
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.warn("[TTS Play Error] Piper play rejected, routing to fallback:", err);
+      playBrowserSpeechFallback(text, studentName, handleSpeechEnded);
+    }
+  };
+
+  const playBrowserSpeechFallback = (text: string, studentName: string, onEnded: () => void) => {
+    if (!('speechSynthesis' in window)) {
+      onEnded();
+      return;
+    }
+
+    // Cancel any previous speaking elements
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.volume = volume;
+
+    // Resolve matched browser system voices
+    const voices = window.speechSynthesis.getVoices();
+    let matchingVoices = [];
+    if (language === 'Hindi') {
+      matchingVoices = voices.filter((v) => v.lang.startsWith('hi'));
+    } else if (language === 'Bengali') {
+      matchingVoices = voices.filter((v) => v.lang.startsWith('bn'));
+    } else {
+      matchingVoices = voices.filter((v) => v.lang.startsWith('en'));
+    }
+
+    // Prioritize neural voices
+    matchingVoices.sort((a, b) => {
+      const aGoogle = a.name.toLowerCase().includes('google');
+      const bGoogle = b.name.toLowerCase().includes('google');
+      const aNatural = a.name.toLowerCase().includes('natural');
+      const bNatural = b.name.toLowerCase().includes('natural');
+      if ((aGoogle || aNatural) && !(bGoogle || bNatural)) return -1;
+      if (!(aGoogle || aNatural) && (bGoogle || bNatural)) return 1;
+      return 0;
+    });
+
+    const targetVoice = matchingVoices[0] || null;
+    if (targetVoice) {
+      utterance.voice = targetVoice;
+    }
+
+    // Apply specific pitch and rate multipliers matching character roles
+    let pitch = 1.0;
+    let rate = 1.0;
+    switch (studentName) {
+      case 'Aarav': // Curious (Arjun role: energetic, medium speed, enthusiastic)
+        pitch = 0.95;
+        rate = 1.0;
+        break;
+      case 'Ananya': // Shy (Priya role: soft, slower speaking, low confidence)
+        pitch = 1.25;
+        rate = 0.82;
+        break;
+      case 'Vihaan': // Distracted (Rahul role: casual, slightly lazy)
+        pitch = 1.0;
+        rate = 0.92;
+        break;
+      case 'Ishaan': // Hyperactive (Kabir role: fast speaking, excited)
+        pitch = 1.15;
+        rate = 1.25;
+        break;
+      case 'Riya': // Weak Learner (Neha role: slower, hesitant)
+        pitch = 1.18;
+        rate = 0.82;
+        break;
+      case 'Kabir': // Overconfident (Riya role: confident, quick speaking)
+        pitch = 0.95;
+        rate = 1.18;
+        break;
+      default:
+        pitch = 1.0;
+        rate = 1.0;
+    }
+
+    if (language === 'Hindi' || language === 'Bengali') {
+      rate *= 0.9;
+    }
+
+    utterance.pitch = pitch;
+    utterance.rate = rate;
+
+    utterance.onend = () => {
+      onEnded();
+    };
+
+    utterance.onerror = () => {
+      onEnded();
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
   // 6. Handle sending dialogue (turns) to backend
@@ -353,7 +464,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
         });
 
         // Trigger TTS to voice the student response
-        speakStudentResponse(reply.message_text, reply.sender_name);
+        speakStudentResponse(reply.message_text, reply.sender_name, reply.emotion);
 
         // Clear active speaker bubble text after 5 seconds
         setTimeout(() => {
@@ -576,6 +687,14 @@ export const Classroom: React.FC<ClassroomProps> = ({
         </div>
         
         <div className="classroom-header-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {/* Volume and Mute Control HUD */}
+          <VolumeControl
+            isMuted={isMuted}
+            setIsMuted={setIsMuted}
+            volume={volume}
+            setVolume={setVolume}
+          />
+
           {/* Countdown Clock */}
           <div 
             className="classroom-timer-wrapper"

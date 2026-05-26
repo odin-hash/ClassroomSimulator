@@ -2065,4 +2065,95 @@ body {
   }
 }
 
+/* ==========================================================================
+   Phase 16: AI Voice System Premium Animations & HUD Styling
+   ========================================================================== */
+
+/* Active Speaker Holographic breathing glow and active borders */
+.student-desk.active-speaker {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18), var(--shadow-md) !important;
+  transform: translateY(-2px);
+  background: var(--bg-primary) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.student-avatar-wrapper.active-speaker-ring {
+  position: relative;
+}
+
+.student-avatar-wrapper.active-speaker-ring::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 2px solid #2563eb;
+  border-radius: 50%;
+  animation: active-speaker-pulse 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes active-speaker-pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.85;
+    border-color: rgba(37, 99, 235, 0.8);
+    box-shadow: 0 0 0 0px rgba(37, 99, 235, 0.4);
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.4;
+    border-color: rgba(37, 99, 235, 0.3);
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.15);
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: 0;
+    border-color: rgba(37, 99, 235, 0);
+    box-shadow: 0 0 0 12px rgba(37, 99, 235, 0);
+  }
+}
+
+/* Volume control hover animations */
+.volume-hud-container:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1), var(--shadow-sm) !important;
+}
+
+/* Slider custom styles to guarantee premium visual representation */
+.volume-slider-wrapper input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+}
+
+.volume-slider-wrapper input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+}
+
+.volume-slider-wrapper input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+
+.volume-slider-wrapper input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.25);
+}
+
+
 
