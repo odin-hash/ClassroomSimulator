@@ -1743,6 +1743,37 @@ body {
   .student-filmstrip {
     margin-bottom: 2rem;
   }
+
+  /* Setup Dashboard Home Page Mobile Optimizations */
+  .main-content {
+    padding: 1.25rem 1rem !important; /* Scale down outer margins to fit mobile screen edges */
+  }
+
+  .dashboard-panel {
+    padding: 1.25rem 1rem !important; /* Minimize internal padding to expand space for inputs */
+  }
+
+  .navbar {
+    padding: 1rem !important;
+    gap: 0.75rem;
+  }
+
+  .nav-logo {
+    font-size: 1.2rem !important;
+  }
+
+  .nav-actions {
+    gap: 0.5rem !important;
+  }
+
+  .form-input, .form-textarea, .form-select {
+    font-size: 16px !important; /* Force min 16px font-size to prevent iOS Safari auto-zoom on focus */
+    padding: 0.65rem 0.85rem !important;
+  }
+
+  .history-list {
+    max-height: 400px !important;
+  }
 }
 
 /* ==========================================================================
@@ -1770,6 +1801,21 @@ body {
   .text-input-field {
     font-size: 0.85rem !important;
     padding: 0.75rem 2.8rem 0.75rem 1rem !important;
+  }
+
+  /* History Card Stack on Portrait Mobile Screens */
+  .history-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+
+  .history-card .score-badge {
+    width: 100% !important;
+    padding: 0.4rem !important;
+    font-size: 0.85rem !important;
+    box-sizing: border-box;
   }
 }
 
