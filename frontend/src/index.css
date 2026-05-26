@@ -458,9 +458,14 @@ body {
   }
 }
 
-.preview-student-emoji {
-  font-size: 2rem;
-  line-height: 1;
+.preview-student-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .preview-student-name {
@@ -508,7 +513,7 @@ body {
   .hero-heading { font-size: 2.5rem; }
   .hero-preview-grid { max-width: 280px; gap: 0.5rem; }
   .preview-student { padding: 0.75rem 0.5rem; border-radius: 12px; }
-  .preview-student-emoji { font-size: 1.5rem; }
+  .preview-student-img { width: 52px; height: 52px; }
 }
 
 /* Dashboard Grid (Form + History) */

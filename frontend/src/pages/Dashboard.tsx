@@ -23,12 +23,12 @@ interface PastSession {
 
 // Decorative student preview data for the hero section
 const PREVIEW_STUDENTS = [
-  { name: 'Aarav', emoji: '✨', color: '#FEF3C7' },
-  { name: 'Priya', emoji: '📚', color: '#DBEAFE' },
-  { name: 'Ishaan', emoji: '🚀', color: '#D1FAE5' },
-  { name: 'Neha', emoji: '🌟', color: '#EDE9FE' },
-  { name: 'Kabir', emoji: '🎨', color: '#FEE2E2' },
-  { name: 'Deepa', emoji: '💡', color: '#FFEDD5' },
+  { name: 'Aarav', img: '/students/aarav.png', color: '#FEF3C7' },
+  { name: 'Priya', img: '/students/priya.png', color: '#DBEAFE' },
+  { name: 'Ishaan', img: '/students/ishaan.png', color: '#D1FAE5' },
+  { name: 'Neha', img: '/students/neha.png', color: '#EDE9FE' },
+  { name: 'Kabir', img: '/students/kabir.png', color: '#FEE2E2' },
+  { name: 'Deepa', img: '/students/deepa.png', color: '#FFEDD5' },
 ];
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -215,7 +215,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 animationDelay: `${0.3 + i * 0.06}s`,
               }}
             >
-              <span className="preview-student-emoji">{s.emoji}</span>
+              <img
+                src={s.img}
+                alt={s.name}
+                className="preview-student-img"
+                loading="lazy"
+              />
               <span className="preview-student-name">{s.name}</span>
             </div>
           ))}

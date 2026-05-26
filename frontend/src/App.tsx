@@ -75,7 +75,7 @@ function App() {
           <header className="navbar">
             <div className="nav-logo" onClick={handleBackToDashboard} style={{ cursor: 'pointer' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-10 9h3v8h14v-8h3L12 3z"/><path d="M12 18H12.01"/></svg>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 0 2.5 3 6 3s6-3 6-3v-5"/><line x1="22" y1="10" x2="22" y2="16"/><circle cx="22" cy="16.5" r="0.5" fill="currentColor"/></svg>
               </span>
               <div>
                 <h1 style={{ fontSize: '1.25rem', fontWeight: 800, lineHeight: 1.1 }}>
