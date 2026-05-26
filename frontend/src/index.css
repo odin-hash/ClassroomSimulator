@@ -1060,27 +1060,65 @@ body {
   transform: scale(1);
 }
 
-/* Pulsating Emotional Glows on Student Avatars */
-@keyframes pulse-red-glow {
-  0% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
-  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.85); }
-  100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+/* Pulsating Emotional Glows on Student Avatars - Redesigned for Premium Polish */
+@keyframes premium-rose-pulse {
+  0% {
+    box-shadow: 0 0 8px 1px rgba(239, 68, 68, 0.25), 0 0 15px rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3) !important;
+  }
+  50% {
+    box-shadow: 0 0 32px 8px rgba(239, 68, 68, 0.55), 0 0 50px 15px rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.75) !important;
+  }
+  100% {
+    box-shadow: 0 0 8px 1px rgba(239, 68, 68, 0.25), 0 0 15px rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3) !important;
+  }
+}
+
+@keyframes premium-amber-breathe {
+  0% {
+    box-shadow: 0 0 8px 1px rgba(245, 158, 11, 0.2), 0 0 15px rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.25) !important;
+  }
+  50% {
+    box-shadow: 0 0 28px 6px rgba(245, 158, 11, 0.5), 0 0 45px 12px rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.7) !important;
+  }
+  100% {
+    box-shadow: 0 0 8px 1px rgba(245, 158, 11, 0.2), 0 0 15px rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.25) !important;
+  }
+}
+
+@keyframes premium-blue-breathe {
+  0% {
+    box-shadow: 0 0 8px 1px rgba(59, 130, 246, 0.15), 0 0 15px rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.2) !important;
+  }
+  50% {
+    box-shadow: 0 0 26px 5px rgba(59, 130, 246, 0.45), 0 0 40px 10px rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.6) !important;
+  }
+  100% {
+    box-shadow: 0 0 8px 1px rgba(59, 130, 246, 0.15), 0 0 15px rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.2) !important;
+  }
 }
 
 .student-avatar-svg.confused {
-  border: 2px solid rgba(239, 68, 68, 0.4) !important;
-  animation: pulse-red-glow 2s infinite;
-}
-
-@keyframes jitter-amber-glow {
-  0% { transform: translate(0, 0); box-shadow: 0 0 5px rgba(245, 158, 11, 0.4); }
-  50% { transform: translate(-0.5px, 0.5px); box-shadow: 0 0 22px rgba(245, 158, 11, 0.85); }
-  100% { transform: translate(0, 0); box-shadow: 0 0 5px rgba(245, 158, 11, 0.4); }
+  border: 2px solid rgba(239, 68, 68, 0.3) !important;
+  animation: premium-rose-pulse 2.5s infinite ease-in-out;
 }
 
 .student-avatar-svg.distracted {
-  border: 2px solid rgba(245, 158, 11, 0.4) !important;
-  animation: jitter-amber-glow 0.5s infinite;
+  border: 2px solid rgba(245, 158, 11, 0.25) !important;
+  animation: premium-amber-breathe 3s infinite ease-in-out;
+}
+
+.student-avatar-svg.sleeping {
+  border: 2px solid rgba(59, 130, 246, 0.2) !important;
+  animation: premium-blue-breathe 3.5s infinite ease-in-out;
 }
 
 /* Typing Indicator Animation inside student speech bubbles */
