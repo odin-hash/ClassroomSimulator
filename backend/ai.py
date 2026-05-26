@@ -125,6 +125,151 @@ def clean_json_response(response_text: str) -> str:
     return cleaned.strip()
 
 
+def build_topic_aware_response(
+    student_name: str,
+    personality: str,
+    subject: str,
+    topic: str,
+    language: str,
+    teacher_message: str
+) -> str:
+    """
+    Generates highly accurate, topic-informed student responses for fallback mode.
+    Injects subject-matter keywords and aligns with student personalities.
+    """
+    t_clean = topic.strip()
+    s_clean = subject.strip()
+    
+    # Simple subject keyword injector to add academic realism
+    sub_lower = s_clean.lower()
+    keyword = ""
+    if "math" in sub_lower or "algebra" in sub_lower or "geometry" in sub_lower:
+        keyword = random.choice(["formulas", "equations", "variables", "calculations", "values"])
+    elif "science" in sub_lower or "physic" in sub_lower or "chemistry" in sub_lower or "biology" in sub_lower:
+        keyword = random.choice(["cells", "atoms", "reaction", "gravity", "energy", "experiments"])
+    elif "history" in sub_lower or "social" in sub_lower:
+        keyword = random.choice(["timelines", "civilizations", "empires", "centuries", "historical maps"])
+    elif "lang" in sub_lower or "english" in sub_lower or "hindi" in sub_lower or "bengali" in sub_lower:
+        keyword = random.choice(["grammar structure", "pronunciation", "sentence builders", "vocabulary", "literature"])
+    else:
+        keyword = random.choice(["basic concepts", "core methods", "practical models"])
+
+    # Template mappings
+    if language == "Hindi":
+        if personality == "Curious student":
+            templates = [
+                f"शिक्षक, मैं {t_clean} के बारे में और पढ़ रहा था। यह {s_clean} के बाकी सिद्धांतों और {keyword} से कैसे संबंधित है?",
+                f"{t_clean} की यह अवधारणा वास्तव में बहुत दिलचस्प है! यदि हम इसमें {keyword} की परिस्थितियों को बदल दें तो क्या होगा?",
+                f"क्या हम {t_clean} के वास्तविक जीवन के उदाहरणों पर चर्चा कर सकते हैं? यह हमारे दैनिक जीवन को कैसे प्रभावित करता है?"
+            ]
+        elif personality == "Shy student":
+            templates = [
+                f"उम... जी सर, मुझे लगता है कि मैं {t_clean} समझ रही हूँ... (धीरे से सिर हिलाती है)",
+                f"मुझे लगता है कि {t_clean} का उत्तर {keyword} से जुड़ा होना चाहिए, पर मैं पूरी तरह सुनिश्चित नहीं हूँ... माफ़ कीजिएगा।",
+                f"... (अनन्या शांत है) जी, मैं सुन रही हूँ और {t_clean} के बारे में नोट्स लिख रही हूँ।"
+            ]
+        elif personality == "Distracted student":
+            templates = [
+                f"ओह! माफ़ करना शिक्षक जी, आपने {t_clean} के बारे में क्या कहा? मैं बाहर एक सुंदर पक्षी देख रहा था...",
+                f"क्या आप {t_clean} वाला आखिरी हिस्सा दोहरा सकते हैं? मैं कॉपी में {keyword} के बारे में कुछ और लिख रहा था...",
+                f"शिक्षक जी, क्या {t_clean} का संबंध हमारे वीडियो गेम्स से भी है? वैसे, लंच ब्रेक कब होगा?"
+            ]
+        elif personality == "Hyperactive student":
+            templates = [
+                f"सर! सर! {t_clean} तो बहुत मजेदार है! क्या हम {keyword} का उपयोग करके इसपर अभी एक लाइव प्रयोग कर सकते हैं? प्लीज!",
+                f"ओह, मुझे पता है! {t_clean} ठीक वैसा ही है जैसे जब हम किसी चीज़ को ऊपर फेंकते हैं और वह नीचे आती है, है ना?",
+                f"यह तो बहुत आसान है! मुझे {t_clean} पर कल देखा हुआ एक यूट्यूब वीडियो याद आ गया। क्या मैं इसके बारे में बताऊं?"
+            ]
+        elif personality == "Weak learner":
+            templates = [
+                f"सर/मैम, मैं {t_clean} को लेकर थोड़ी उलझन में हूँ। क्या आप कृपया {keyword} के एक बहुत ही सरल उदाहरण के साथ समझा सकते हैं?",
+                f"मैं {t_clean} को समझने की कोशिश कर रही हूँ, पर यह थोड़ा कठिन लग रहा है। {keyword} का मुख्य अर्थ क्या है?",
+                f"तो... क्या {t_clean} का मतलब यह हुआ कि जब तापमान बढ़ता है तो दबाव भी बढ़ता है? या मैंने उल्टा समझ लिया?"
+            ]
+        else: # Overconfident student
+            templates = [
+                f"अरे, {t_clean} तो बहुत आसान है! यह तो {s_clean} और {keyword} का मूल ज्ञान है। हमें इसे ज़्यादा रटने की ज़रूरत नहीं है!",
+                f"मुझे {t_clean} का उत्तर पता है! यह सब चुंबकत्व और गुरुत्वाकर्षण के कारण होता है। मैं शत-प्रतिशत आश्वस्त हूँ!",
+                f"इसका सीधा जवाब है कि {t_clean} बस एक प्राकृतिक नियम है और मैं इसके बारे में पहले से सब जानता हूँ!"
+            ]
+    elif language == "Bengali":
+        if personality == "Curious student":
+            templates = [
+                f"শিক্ষক মহাশয়, আমি {t_clean} সম্পর্কে পড়ছিলাম। এটি {s_clean}-এর অন্যান্য বিষয়ের সাথে কীভাবে সম্পর্কিত? আমরা কি {keyword} নিয়ে আরও আলোচনা করতে পারি?",
+                f"{t_clean}-এর এই ধারণাটি অত্যন্ত চমৎকার! যদি আমরা এর {keyword} পরিস্থিতি পরিবর্তন করি তবে কী প্রভাব পড়বে?",
+                f"আমাদের দৈনন্দিন জীবনে {t_clean}-এর বাস্তব প্রয়োগ কী? এটি আমরা কীভাবে কাজে লাগাতে পারি?"
+            ]
+        elif personality == "Shy student":
+            templates = [
+                f"উম... হ্যাঁ স্যার, মনে হয় {t_clean} বুঝতে পারছি... (ধীরে ধীরে মাথা নাড়ে)",
+                f"আমার মনে হয় {t_clean}-এর উত্তরটা {keyword}-এর সাথে সম্পর্কিত হবে, তবে আমি পুরোপুরি নিশ্চিত নই... দুঃখিত।",
+                f"... (অনন্যা শান্ত আছে) হ্যাঁ স্যার, আমি শুনছি এবং {t_clean} নিয়ে খাতায় লিখছি।"
+            ]
+        elif personality == "Distracted student":
+            templates = [
+                f"ওহ! দুঃখিত স্যার, আপনি {t_clean} সম্পর্কে কী বলছিলেন? আমি জানলার বাইরে একটি পাখি দেখছিলাম...",
+                f"আপনি কি {t_clean}-এর শেষ অংশটি আর একবার বলবেন? আমি খাতায় {keyword} নিয়ে অন্য কিছু লিখছিলাম...",
+                f"শিক্ষক মহাশয়, {t_clean} কি কোনোভাবে আমাদের গেমসের সাথে যুক্ত? আমাদের টিফিন কখন হবে?"
+            ]
+        elif personality == "Hyperactive student":
+            templates = [
+                f"স্যার! স্যার! {t_clean} তো দারুণ মজার! আমরা কি এখনই {keyword} নিয়ে কোনো পরীক্ষা করতে পারি? প্লিজ স্যার!",
+                f"আমি জানি! {t_clean} ঠিক যেমন একটা বল ছুড়ে দিলে মাধ্যাকর্ষণের জন্য নিচে নেমে আসে, তাই না?",
+                f"ওটা তো খুবই সহজ! আমার গতকাল দেখা একটি ভিডিওর কথা মনে পড়ে গেল! আমি কি ওটা শেয়ার করতে পারি?"
+            ]
+        elif personality == "Weak learner":
+            templates = [
+                f"স্যার/ম্যাডাম, আমি {t_clean} নিয়ে একটু বিভ্রান্ত হয়ে পড়েছি। আপনি কি দয়া করে {keyword}-এর একটি সহজ উদাহরণ দিয়ে বুঝিয়ে দেবেন?",
+                f"আমি {t_clean} বোঝার চেষ্টা করছি, কিন্তু একটু বেশি দ্রুত হয়ে যাচ্ছে। ওই {keyword} বিষয়টার মূল মানে কী?",
+                f"তাহলে... {t_clean}-এর মানে কি এই যে তাপমাত্রা বাড়লে এটা ঘটে? নাকি আমি ভুল বুঝলাম?"
+            ]
+        else: # Overconfident student
+            templates = [
+                f"আরে, {t_clean} তো খুবই সহজ! এটি তো {s_clean}-এর সাধারণ {keyword} বিষয়, তাই না? আমাদের এটি বেশি পড়ার প্রয়োজন নেই!",
+                f"আমি {t_clean}-এর উত্তর ১০০ ভাগ নিশ্চিত জানি! এটি চুম্বকত্ব আর {keyword}-এর জন্য ঘটে থাকে স্যার!",
+                f"এর ব্যাখ্যা তো খুবই সহজ এবং আমি {t_clean} সম্পর্কে আগে থেকেই সব জানি, আমাদের সময় নষ্ট না করলেও চলবে!"
+            ]
+    else: # English (Default)
+        if personality == "Curious student":
+            templates = [
+                f"Teacher, I was reading about {t_clean} in {s_clean}. How does this concept apply if we change the scale or {keyword}? Can you explain the correlation?",
+                f"This concept of {t_clean} is fascinating! Can we relate this phenomenon to other {keyword} we learned recently?",
+                f"That makes sense, but what is the practical, real-world application of {t_clean} in our daily lives?"
+            ]
+        elif personality == "Shy student":
+            templates = [
+                f"Umm... yes, I think I understand {t_clean}... (nods quietly)",
+                f"I... I think the answer for {t_clean} might be related to {keyword}, but I'm not entirely sure... sorry.",
+                f"... (Ananya looks down and speaks softly) I am listening and taking notes on {t_clean}, thank you."
+            ]
+        elif personality == "Distracted student":
+            templates = [
+                f"Wait, sorry teacher, what did you say about {t_clean}? I was looking at a bird outside...",
+                f"Oh! Um, yes... could you repeat that part about {t_clean}? I was just writing down something about {keyword} in my notebook...",
+                f"Teacher, how does {t_clean} relate to the video games we play? Also, when is lunch break?"
+            ]
+        elif personality == "Hyperactive student":
+            templates = [
+                f"Ooh! Ooh! Pick me! I know! {t_clean} is just like when you throw a ball and it comes down because of gravity, right?",
+                f"I have a great idea! Can we do a live science experiment on {t_clean} right now using {keyword}? Can we, teacher? Please!",
+                f"This reminds me of a cool YouTube video I saw yesterday about {t_clean}! Can we blow things up?"
+            ]
+        elif personality == "Weak learner":
+            templates = [
+                f"Sir/Ma'am, I am a bit confused about {t_clean}. Could you please explain {keyword} again with a simple example?",
+                f"I'm trying to follow {t_clean}, but it's going a bit too fast for me. What does that specific term in {keyword} mean?",
+                f"So... does it mean that in {t_clean}, when one variable increases, this happens? Or did I get it backwards?"
+            ]
+        else: # Overconfident student
+            templates = [
+                f"That's easy! The answer for {t_clean} is obviously 100 times that, because everything multiplies under these {keyword} conditions!",
+                f"I already know all about {t_clean}! It's basically just common sense in {s_clean}, right? We don't even need to write it down.",
+                f"The explanation for {t_clean} is simple: it works because of magnetism and {keyword}. I'm 100% sure that's correct!"
+            ]
+            
+    return random.choice(templates)
+
+
 async def generate_student_reply(
     subject: str,
     topic: str,
@@ -139,7 +284,7 @@ async def generate_student_reply(
     active_event: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Generates a student response. Calls Gemini API if available, else falls back to rule-based logic.
+    Generates a student response. Calls Gemini API if available, else falls back to dynamic rule-based logic.
     """
     if HAS_API_KEY:
         try:
@@ -149,7 +294,7 @@ async def generate_student_reply(
                 history_str += f"{msg['sender_name']}: {msg['message_text']}\n"
 
             prompt = f"""
-            You are an AI simulating a classroom student for B.Ed teacher training.
+            You are simulating a classroom student for teacher training.
             
             CLASSROOM CONTEXT:
             - Subject: {subject}
@@ -172,11 +317,19 @@ async def generate_student_reply(
             TEACHER'S LATEST INPUT:
             "{teacher_message}"
 
-            Based on the student's personality, how they are affected by the active event, and what the teacher just said:
-            Generate a realistic response.
-            
-            If the language is Hindi, you can write in Devnagari script. If Bengali, write in Bengali script.
-            
+            INSTRUCTIONS:
+            1. Generate a realistic student response.
+            2. Be highly concise: keep responses short and natural (1-3 sentences maximum).
+            3. Act strictly according to the student's Grade Level ({class_level}) and personality:
+               - Shy students respond quietly, briefly, and sometimes nervously.
+               - Curious students ask insightful but age-appropriate questions related to {topic}.
+               - Distracted students are off-task or easily distracted.
+               - Hyperactive students are enthusiastically speaking out of turn.
+               - Weak learners express confusion, or ask for simple analogies of {topic}.
+               - Overconfident students blurt out quick, oversimplified, or slightly incorrect answers.
+            4. If the teacher asked a direct question, make the student answer according to their academic level.
+            5. Respond in the exact language script requested (Devanagari for Hindi, Bengali script for Bengali, English letters for English).
+
             Choose a suitable visual emotion status for the student:
             - 'normal'
             - 'confused' (if Weak learner, or concept is tough)
@@ -201,10 +354,15 @@ async def generate_student_reply(
             print(f"Gemini API Error, falling back: {e}")
             # fall through to fallback
 
-    # Fallback rule-based responder
-    lang = language if language in FALLBACK_DIALOGUES else "English"
-    dialogues = FALLBACK_DIALOGUES[lang].get(student_personality, FALLBACK_DIALOGUES[lang]["Weak learner"])
-    response_text = random.choice(dialogues)
+    # Dynamic fallback responder incorporating subject, topic, and persona parameters
+    response_text = build_topic_aware_response(
+        student_name=student_name,
+        personality=student_personality,
+        subject=subject,
+        topic=topic,
+        language=language,
+        teacher_message=teacher_message
+    )
 
     # Determine emotion based on persona
     emotion = "normal"
@@ -222,6 +380,7 @@ async def generate_student_reply(
         "response_text": response_text,
         "emotion": emotion
     }
+
 
 
 async def generate_evaluation(

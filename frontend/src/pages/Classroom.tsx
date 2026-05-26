@@ -68,6 +68,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [showSyllabus, setShowSyllabus] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState<false | 'exit' | 'end' | 'logo'>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Timer states
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes default in seconds
@@ -382,17 +383,37 @@ export const Classroom: React.FC<ClassroomProps> = ({
   };
 
   return (
-    <div className={`classroom-container ${isInputFocused ? 'classroom-dimmed' : ''} ${isChatOpen ? 'chat-open' : ''}`}>
+    <div 
+      className={`classroom-container ${isInputFocused ? 'classroom-dimmed' : ''} ${isChatOpen ? 'chat-open' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}
+      onClick={(e) => {
+        // Automatically dismiss mobile rail menu if tapped outside
+        if (isMobileMenuOpen && !(e.target as HTMLElement).closest('.left-nav-rail') && !(e.target as HTMLElement).closest('.mobile-hamburger-btn')) {
+          setIsMobileMenuOpen(false);
+        }
+      }}
+    >
       {/* Left Collapsing Navigation Rail */}
-      <div className="left-nav-rail">
-        <div className="nav-rail-logo" onClick={() => setShowExitWarning('logo')} style={{ cursor: 'pointer' }}>
+      <div className={`left-nav-rail ${isMobileMenuOpen ? 'open' : ''}`}>
+        <div 
+          className="nav-rail-logo" 
+          onClick={() => { 
+            setShowExitWarning('logo'); 
+            setIsMobileMenuOpen(false); 
+          }} 
+          style={{ cursor: 'pointer' }}
+        >
           <span style={{ display: 'inline-flex', color: 'var(--text-primary)' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-10 9h3v8h14v-8h3L12 3z"/><path d="M12 18H12.01"/></svg>
           </span>
           <span className="nav-rail-label">Future Classroom</span>
         </div>
         
-        <button className="nav-rail-item active" title={t.classroomStatus} type="button">
+        <button 
+          className="nav-rail-item active" 
+          title={t.classroomStatus} 
+          onClick={() => setIsMobileMenuOpen(false)}
+          type="button"
+        >
           <span style={{ display: 'inline-flex' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
           </span>
@@ -402,7 +423,10 @@ export const Classroom: React.FC<ClassroomProps> = ({
         <button 
           className={`nav-rail-item ${showSyllabus ? 'active' : ''}`}
           title={`${t.topic}: ${sessionDetails?.topic || ''}`}
-          onClick={() => setShowSyllabus(true)}
+          onClick={() => {
+            setShowSyllabus(true);
+            setIsMobileMenuOpen(false);
+          }}
           type="button"
         >
           <span style={{ display: 'inline-flex' }}>
@@ -415,7 +439,10 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
         <button 
           className="nav-rail-item" 
-          onClick={() => setShowExitWarning('exit')}
+          onClick={() => {
+            setShowExitWarning('exit');
+            setIsMobileMenuOpen(false);
+          }}
           title={t.backBtn}
           id="classroom-btn-exit"
           type="button"
@@ -429,7 +456,10 @@ export const Classroom: React.FC<ClassroomProps> = ({
         <button 
           className="nav-rail-item" 
           style={{ color: 'var(--color-danger)' }}
-          onClick={() => setShowExitWarning('end')}
+          onClick={() => {
+            setShowExitWarning('end');
+            setIsMobileMenuOpen(false);
+          }}
           title={t.endBtn}
           id="classroom-btn-end"
           type="button"
@@ -443,6 +473,22 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
       {/* Top Header Navbar */}
       <div className="classroom-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', boxSizing: 'border-box' }}>
+        {/* Hamburger Menu Toggle Button for Mobile viewports */}
+        <button
+          className={`mobile-hamburger-btn ${isMobileMenuOpen ? 'active' : ''}`}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          type="button"
+          aria-label="Toggle Menu"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {isMobileMenuOpen ? (
+              <path d="M18 6L6 18M6 6l12 12" />
+            ) : (
+              <path d="M3 12h18M3 6h18M3 18h18" />
+            )}
+          </svg>
+        </button>
+
         <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
             {sessionDetails?.subject}: <span className="gradient-text">{sessionDetails?.topic}</span>

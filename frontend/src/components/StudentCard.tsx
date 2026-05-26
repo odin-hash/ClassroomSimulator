@@ -22,6 +22,8 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   bubbleText,
   onAction,
 }) => {
+  const [showTouchActions, setShowTouchActions] = React.useState(false);
+
   // Translate emotion to human-readable attention state badge
   const getStatusBadge = (style?: React.CSSProperties) => {
     switch (emotion) {
@@ -42,7 +44,16 @@ export const StudentCard: React.FC<StudentCardProps> = ({
     <div 
       className={`student-desk saas-card ${isActiveSpeaker ? 'active-speaker' : ''} ${
         emotion === 'sleeping' ? 'sleeping' : emotion === 'distracted' ? 'distracted' : ''
-      }`}
+      } ${showTouchActions ? 'show-touch-actions' : ''}`}
+      onClick={(e) => {
+        // Toggle action overlay on click/tap, but ignore if tapping an active action button inside the overlay
+        if ((e.target as HTMLElement).closest('.student-action-overlay button')) {
+          setShowTouchActions(false);
+          return;
+        }
+        setShowTouchActions(!showTouchActions);
+      }}
+      onMouseLeave={() => setShowTouchActions(false)}
       id={`student-desk-${student.name.toLowerCase()}`}
     >
       {/* Floating Status Indicator Pill */}
