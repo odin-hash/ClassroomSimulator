@@ -63,6 +63,7 @@ def get_events():
 @app.post("/api/sessions", response_model=ClassroomSessionOut, status_code=status.HTTP_201_CREATED)
 def create_session(session_data: ClassroomSessionCreate, db: Session = Depends(get_db)):
     """Creates a new simulation session"""
+    print(f"[CREATE SESSION] session_data: {session_data.model_dump()}")
     db_session = ClassroomSession(
         subject=session_data.subject,
         topic=session_data.topic,
