@@ -433,7 +433,12 @@ async def text_to_speech(text: str, student: str, language: str = "English"):
         if os.path.isfile(audio_path):
             # Determine media type from file extension
             media_type = "audio/mpeg" if audio_path.endswith(".mp3") else "audio/wav"
-            return FileResponse(audio_path, media_type=media_type, filename=os.path.basename(audio_path))
+            return FileResponse(
+                audio_path,
+                media_type=media_type,
+                filename=os.path.basename(audio_path),
+                headers={"Content-Disposition": "inline", "Accept-Ranges": "bytes"}
+            )
         else:
             raise HTTPException(status_code=500, detail="Generated audio file could not be verified on disk.")
     except Exception as e:
@@ -441,13 +446,26 @@ async def text_to_speech(text: str, student: str, language: str = "English"):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def transcribe_google(audio_content: bytes) -> str:
+def transcribe_google(audio_content: bytes, mime_type: str = "audio/webm") -> str:
     import sys
     from google.cloud import speech
     client = speech.SpeechClient()
     audio = speech.RecognitionAudio(content=audio_content)
+    
+    # Determine encoding based on MIME type
+    if "webm" in mime_type:
+        encoding = speech.RecognitionConfig.AudioEncoding.WEBM_OPUS
+        sample_rate_hertz = 48000
+    elif "ogg" in mime_type or "opus" in mime_type:
+        encoding = speech.RecognitionConfig.AudioEncoding.OGG_OPUS
+        sample_rate_hertz = 48000
+    else:
+        encoding = speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED
+        sample_rate_hertz = None
+        
     config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED,
+        encoding=encoding,
+        sample_rate_hertz=sample_rate_hertz,
         language_code="en-IN",
         alternative_language_codes=["hi-IN", "bn-IN"],
         enable_automatic_punctuation=True,
@@ -540,8 +558,13 @@ async def transcribe_assemblyai(audio_content: bytes) -> str:
         raise Exception("AssemblyAI transcription timed out")
 
 
+from fastapi import Header
+
 @app.post("/api/transcribe")
-async def transcribe_speech(file: UploadFile = File(...)):
+async def transcribe_speech(
+    file: UploadFile = File(...),
+    x_audio_mime_type: Optional[str] = Header(None)
+):
     """
     Receives an audio file from the teacher microphone and transcribes it to text.
     Dispatches to Google STT, Deepgram, or AssemblyAI with fallback.
@@ -552,6 +575,8 @@ async def transcribe_speech(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Empty audio file uploaded")
     
     errors = []
+    mime_type = x_audio_mime_type or file.content_type or "audio/webm"
+    print(f"[STT] Dynamic audio mime-type: {mime_type}")
     
     # 0. Gemini Speech-to-Text (Primary) — using new google.genai SDK
     if os.environ.get("GEMINI_API_KEY"):
@@ -568,7 +593,7 @@ async def transcribe_speech(file: UploadFile = File(...)):
                         "parts": [
                             {
                                 "inline_data": {
-                                    "mime_type": file.content_type or "audio/webm",
+                                    "mime_type": mime_type,
                                     "data": audio_b64
                                 }
                             },
@@ -595,7 +620,7 @@ async def transcribe_speech(file: UploadFile = File(...)):
             import concurrent.futures
             loop = asyncio.get_running_loop()
             with concurrent.futures.ThreadPoolExecutor() as pool:
-                result = await loop.run_in_executor(pool, transcribe_google, audio_content)
+                result = await loop.run_in_executor(pool, transcribe_google, audio_content, mime_type)
                 if result:
                     print(f"[STT] Google Cloud STT Success: '{result}'")
                     return {"text": result, "provider": "google"}

@@ -398,6 +398,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
     try {
       const audioUrl = `${API_BASE_URL}/api/tts?text=${encodeURIComponent(text)}&student=${encodeURIComponent(studentName)}&language=${encodeURIComponent(language)}`;
       const audio = new Audio(audioUrl);
+      audio.crossOrigin = "anonymous";
       currentAudioRef.current = audio;
       audio.volume = volume;
 
@@ -800,6 +801,9 @@ export const Classroom: React.FC<ClassroomProps> = ({
       console.info(`[STT] Uploading recorded speech (${mimeType}) to /api/transcribe...`);
       const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
         method: 'POST',
+        headers: {
+          'X-Audio-Mime-Type': mimeType
+        },
         body: formData,
       });
 
@@ -843,10 +847,14 @@ export const Classroom: React.FC<ClassroomProps> = ({
       // Start MediaRecorder IMMEDIATELY instead of waiting for a high silence threshold
       audioChunksRef.current = [];
       let options: MediaRecorderOptions = {};
-      if (MediaRecorder.isTypeSupported('audio/webm')) {
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options = { mimeType: 'audio/webm;codecs=opus' };
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
         options = { mimeType: 'audio/webm' };
       } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
         options = { mimeType: 'audio/mp4' };
+      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+        options = { mimeType: 'audio/ogg;codecs=opus' };
       } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
         options = { mimeType: 'audio/ogg' };
       }
@@ -1386,6 +1394,9 @@ export const Classroom: React.FC<ClassroomProps> = ({
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
+                position: 'relative',
+                zIndex: 10,
+                flexShrink: 0,
                 transform: isSpeaking ? 'scale(1.15)' : 'scale(1)',
                 transition: 'all 0.15s ease-in-out',
                 boxShadow: isSpeaking ? '0 0 20px #ef4444' : 'none'

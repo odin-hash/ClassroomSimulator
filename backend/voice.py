@@ -198,9 +198,17 @@ def generate_speech_audio(text: str, student_name: str, language: str = "English
             # No event loop running — just use asyncio.run
             asyncio.run(_synthesize_edge_tts(clean_text, voice, rate, pitch, output_path))
 
-        # Verify output
+        # Verify output and force disk synchronization
         if os.path.isfile(output_path) and os.path.getsize(output_path) > 0:
-            print(f"[Edge TTS] Successfully generated: {output_filename}")
+            try:
+                # Force the OS write buffer to flush to physical storage
+                with open(output_path, "a+b") as f:
+                    f.flush()
+                    os.fsync(f.fileno())
+            except Exception as sync_err:
+                print(f"[Edge TTS] Sync warning (non-fatal): {sync_err}")
+                
+            print(f"[Edge TTS] Successfully generated and synced: {output_filename}")
             return output_path
         else:
             raise FileNotFoundError(f"Generated audio file not found at {output_path}")
