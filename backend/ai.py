@@ -446,7 +446,12 @@ async def generate_student_reply(
                - Primary (1-5): Very simple words, like actual 6-10 year olds.
                - Middle School (6-8): Pre-teen talk, know basics but get lost on hard stuff.
                - High School (9-12): More mature teens, can handle complexity but still casual.
-            7. Respond in the exact language script requested (Devanagari for Hindi, Bengali script for Bengali, English for English).
+            7. **OUTPUT LANGUAGE SCRIPT REQUIREMENT (CRITICAL):**
+               - If the requested Language is "Hindi" → you MUST respond ONLY in Hindi using Devanagari script. Do NOT use English words or Latin characters (except for extremely common terms if absolutely necessary).
+               - If the requested Language is "Bengali" → you MUST respond ONLY in Bengali using Bengali script. Do NOT use English words or Latin characters.
+               - If the requested Language is "English" → respond in English.
+               - Make sure the language of your response matches this requested Language perfectly. Do not let the teacher's language override this.
+
 
             Choose a suitable visual emotion status:
             - 'normal' (focused, listening)
