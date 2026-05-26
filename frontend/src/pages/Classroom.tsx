@@ -85,6 +85,10 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const isAudioPlayingRef = useRef(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const originalEmotionsRef = useRef<Record<string, string>>({});
+  const wasMicEnabledRef = useRef(false);
+  const handleSendTurnRef = useRef<any>(null);
+  const activeUtteranceRef = useRef<any>(null);
+  const isListeningRef = useRef(false);
 
   // 1. Fetch Session Info & Students list
   useEffect(() => {
@@ -144,20 +148,27 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
       rec.onstart = () => {
         setIsListening(true);
+        isListeningRef.current = true;
       };
 
       rec.onresult = (event: any) => {
         const transcriptText = event.results[0][0].transcript;
         setTeacherInput(transcriptText);
+        if (transcriptText.trim()) {
+          console.info("[Mic Auto-Send] Speech recognized. Auto-transcribing and sending turn:", transcriptText);
+          handleSendTurnRef.current?.(transcriptText);
+        }
       };
 
       rec.onerror = (e: any) => {
         console.error('Speech recognition error:', e);
         setIsListening(false);
+        isListeningRef.current = false;
       };
 
       rec.onend = () => {
         setIsListening(false);
+        isListeningRef.current = false;
       };
 
       recognitionRef.current = rec;
@@ -169,6 +180,51 @@ export const Classroom: React.FC<ClassroomProps> = ({
       }
     };
   }, [language]);
+
+  // iOS Safari touch audio context & SpeechSynthesis unlocker
+  useEffect(() => {
+    const unlockAudio = () => {
+      // 1. Unlock web audio / new Audio()
+      const contextClass = (window.AudioContext || (window as any).webkitAudioContext);
+      if (contextClass) {
+        try {
+          const ctx = new contextClass();
+          const buffer = ctx.createBuffer(1, 1, 22050);
+          const source = ctx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(ctx.destination);
+          source.start(0);
+          ctx.resume();
+        } catch (e) {
+          console.warn("[AudioContext Unlock] Failed:", e);
+        }
+      }
+      
+      // 2. Unlock SpeechSynthesis
+      if ('speechSynthesis' in window) {
+        try {
+          const u = new SpeechSynthesisUtterance('');
+          u.volume = 0;
+          window.speechSynthesis.speak(u);
+          console.info("[SpeechSynthesis Unlock] Executed silent utterance on user gesture.");
+        } catch (e) {
+          console.warn("[SpeechSynthesis Unlock] Failed:", e);
+        }
+      }
+      
+      // Remove listeners after first run
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+
+    return () => {
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
 
   // 5. Text-To-Speech (TTS) Voice Handler with Queuing & Piper Backend Support
   const speakStudentResponse = (text: string, studentName: string, emotion: string) => {
@@ -188,15 +244,23 @@ export const Classroom: React.FC<ClassroomProps> = ({
       return;
     }
 
+    // Ensure mic is paused while speech is active to avoid self-feedback loops
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {}
+    }
+
     isAudioPlayingRef.current = true;
     const { text, studentName, emotion } = audioQueueRef.current[0];
 
-    // 1. Temporarily save the student's emotion to restore later, and trigger 'talking' animation
+    // 1. Temporarily save the student's emotion to restore later
     setStudentEmotions((prev) => {
       const restored = { ...prev };
       // Save the target emotion (the one they got from Gemini) so we can return to it later
       originalEmotionsRef.current[studentName] = emotion;
-      restored[studentName] = 'talking';
+      // Do NOT set mouth talking animation - keep their original emotion
+      restored[studentName] = emotion || 'normal';
       return restored;
     });
     
@@ -226,7 +290,22 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
       // De-queue the spoken item and recurse to play the next one
       audioQueueRef.current.shift();
-      processAudioQueue();
+      
+      // Check if there are no more items left in the queue!
+      if (audioQueueRef.current.length === 0) {
+        isAudioPlayingRef.current = false;
+        // Resume voice recognition if it was enabled
+        if (wasMicEnabledRef.current && recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+            console.info("[Mic Auto-Resume] Audio queue empty. Resuming listening dynamically...");
+          } catch (e) {
+            console.warn("[Mic Auto-Resume] Already running or failed to start:", e);
+          }
+        }
+      } else {
+        processAudioQueue();
+      }
     };
 
     // If muted, just bypass audio playing instantly but keep the text/animation triggers flowing for realism
@@ -245,8 +324,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
       audio.volume = volume;
 
       audio.onplay = () => {
-        // Ensure mouth animation is set to 'talking'
-        setStudentEmotions((prev) => ({ ...prev, [studentName]: 'talking' }));
+        // Keeping student's original emotion without loop talking mouth animations
       };
 
       audio.onended = () => {
@@ -278,6 +356,18 @@ export const Classroom: React.FC<ClassroomProps> = ({
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.volume = volume;
 
+    // Set correct language property to ensure correct system voice matching
+    if (language === 'Hindi') {
+      utterance.lang = 'hi-IN';
+    } else if (language === 'Bengali') {
+      utterance.lang = 'bn-IN';
+    } else {
+      utterance.lang = 'en-US';
+    }
+
+    // Retain strong reference to prevent Safari garbage collection during playback
+    activeUtteranceRef.current = utterance;
+
     // Resolve matched browser system voices
     const voices = window.speechSynthesis.getVoices();
     let matchingVoices = [];
@@ -300,7 +390,54 @@ export const Classroom: React.FC<ClassroomProps> = ({
       return 0;
     });
 
-    const targetVoice = matchingVoices[0] || null;
+    // Filter by gender if possible, otherwise distribute by index to ensure distinct student voices
+    const isFemale = ['Ananya', 'Riya'].includes(studentName);
+    let genderVoices = matchingVoices.filter((v) => {
+      const nameLower = v.name.toLowerCase();
+      if (isFemale) {
+        return nameLower.includes('female') || 
+               nameLower.includes('samantha') || 
+               nameLower.includes('karen') || 
+               nameLower.includes('moira') || 
+               nameLower.includes('tessa') || 
+               nameLower.includes('veena') || 
+               nameLower.includes('siri') || 
+               nameLower.includes('susan') || 
+               nameLower.includes('hazel') || 
+               nameLower.includes('zira') ||
+               nameLower.includes('google हिन्दी') ||
+               nameLower.includes('google বাংলা');
+      } else {
+        return nameLower.includes('male') || 
+               nameLower.includes('daniel') || 
+               nameLower.includes('brian') || 
+               nameLower.includes('alex') || 
+               nameLower.includes('fred') || 
+               nameLower.includes('rishi') || 
+               nameLower.includes('david') || 
+               nameLower.includes('george') || 
+               nameLower.includes('ravi');
+      }
+    });
+
+    // Fallback to the entire voice list if no gender-specific voice is found
+    if (genderVoices.length === 0) {
+      genderVoices = matchingVoices;
+    }
+
+    // Map each student to a unique index offset to maximize vocal variance
+    let voiceIndex = 0;
+    switch (studentName) {
+      case 'Aarav': voiceIndex = 0; break;
+      case 'Ananya': voiceIndex = 1; break;
+      case 'Vihaan': voiceIndex = 2; break;
+      case 'Ishaan': voiceIndex = 3; break;
+      case 'Riya': voiceIndex = 4; break;
+      case 'Kabir': voiceIndex = 5; break;
+      default: voiceIndex = 0;
+    }
+
+    const targetVoice = genderVoices[voiceIndex % genderVoices.length] || matchingVoices[0] || null;
     if (targetVoice) {
       utterance.voice = targetVoice;
     }
@@ -346,10 +483,12 @@ export const Classroom: React.FC<ClassroomProps> = ({
     utterance.rate = rate;
 
     utterance.onend = () => {
+      activeUtteranceRef.current = null;
       onEnded();
     };
 
     utterance.onerror = () => {
+      activeUtteranceRef.current = null;
       onEnded();
     };
 
@@ -486,6 +625,11 @@ export const Classroom: React.FC<ClassroomProps> = ({
     }
   };
 
+  // Assign the ref so Speech Recognition can always invoke the latest handleSendTurn
+  useEffect(() => {
+    handleSendTurnRef.current = handleSendTurn;
+  }, [handleSendTurn]);
+
   // 7. Micro-interactions: clicking button overlay on student card
   const handleStudentAction = (studentName: string, actionType: string) => {
     let actionLogText = '';
@@ -511,8 +655,10 @@ export const Classroom: React.FC<ClassroomProps> = ({
     }
 
     if (isListening) {
+      wasMicEnabledRef.current = false;
       recognitionRef.current.stop();
     } else {
+      wasMicEnabledRef.current = true;
       recognitionRef.current.start();
     }
   };
