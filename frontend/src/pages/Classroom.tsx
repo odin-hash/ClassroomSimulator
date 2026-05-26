@@ -714,9 +714,11 @@ export const Classroom: React.FC<ClassroomProps> = ({
     return `${minutes}${t.minutes} : ${seconds < 10 ? '0' : ''}${seconds}${t.seconds}`;
   };
 
+  const hasActiveBubble = !!activeSpeaker || (isPending && !!pendingStudent);
+
   return (
     <div 
-      className={`classroom-container ${isInputFocused ? 'classroom-dimmed' : ''} ${isChatOpen ? 'chat-open' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}
+      className={`classroom-container ${isInputFocused ? 'classroom-dimmed' : ''} ${isChatOpen ? 'chat-open' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''} ${hasActiveBubble ? 'has-active-bubble' : ''}`}
       onClick={(e) => {
         // Automatically dismiss mobile rail menu if tapped outside
         if (isMobileMenuOpen && !(e.target as HTMLElement).closest('.left-nav-rail') && !(e.target as HTMLElement).closest('.mobile-hamburger-btn')) {

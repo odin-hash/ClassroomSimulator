@@ -401,7 +401,7 @@ body {
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: 1.5rem;
-  padding: 3.5rem 1.5rem 1.5rem 1.5rem; /* Increased top padding to give top-row speech bubbles ample clearance */
+  padding: 4.75rem 1.5rem 1.5rem 1.5rem; /* Increased top padding to give top-row speech bubbles ample clearance */
   background: transparent !important;
   border: none !important;
   border-radius: 0;
@@ -1291,8 +1291,15 @@ body {
   flex: 1;
   min-height: 0;
   padding: 1.5rem 2.5rem 1.5rem 1.5rem;
+  position: relative;
+  z-index: 1;
   transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   will-change: opacity, filter;
+}
+
+/* Elevate the dimmed layer when a speech bubble is active to render on top of sticky header */
+.classroom-container.has-active-bubble .classroom-dimmed-layer {
+  z-index: 100;
 }
 
 .classroom-dimmed .classroom-dimmed-layer {
@@ -1864,7 +1871,7 @@ body {
     grid-template-columns: repeat(2, 1fr) !important;
     grid-template-rows: auto !important;
     gap: 1rem !important;
-    padding: 0.5rem !important;
+    padding: 3.5rem 1rem 1.5rem 1rem !important; /* Increased top padding on mobile too for speech bubble clearance */
   }
 
   /* Responsive Chat Drawer full-width on mobile */
