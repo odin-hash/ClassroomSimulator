@@ -100,6 +100,33 @@ def _get_voice_config(student_name: str, language: str = "English") -> Dict[str,
     }
 
 
+def _detect_script(text: str) -> str:
+    """
+    Auto-detect the script of the text by checking Unicode character ranges.
+    Returns 'hindi', 'bengali', or 'english'.
+    """
+    devanagari_count = 0
+    bengali_count = 0
+    latin_count = 0
+
+    for ch in text:
+        cp = ord(ch)
+        if 0x0900 <= cp <= 0x097F:  # Devanagari block
+            devanagari_count += 1
+        elif 0x0980 <= cp <= 0x09FF:  # Bengali block
+            bengali_count += 1
+        elif (0x0041 <= cp <= 0x005A) or (0x0061 <= cp <= 0x007A):  # Latin A-Z/a-z
+            latin_count += 1
+
+    # If there's ANY non-Latin script, use that language
+    # (English voices can't pronounce Hindi/Bengali at all, so even 1 character matters)
+    if devanagari_count > 0 and devanagari_count >= bengali_count:
+        return "hindi"
+    elif bengali_count > 0 and bengali_count > devanagari_count:
+        return "bengali"
+    return "english"
+
+
 async def _synthesize_edge_tts(text: str, voice: str, rate: str, pitch: str, output_path: str):
     """
     Runs Edge TTS synthesis asynchronously and saves to an MP3 file.
@@ -124,7 +151,15 @@ def generate_speech_audio(text: str, student_name: str, language: str = "English
     if not clean_text:
         raise ValueError("Cannot synthesize speech for an empty text string.")
 
-    # Get voice configuration for this student
+    # Auto-detect script from the actual text content as a safety net
+    # This ensures Hindi/Bengali text ALWAYS uses the correct voice
+    detected_script = _detect_script(clean_text)
+    if detected_script == "hindi":
+        language = "Hindi"
+    elif detected_script == "bengali":
+        language = "Bengali"
+
+    # Get voice configuration for this student + language
     config = _get_voice_config(student_name, language)
     voice = config["voice"]
     rate = config["rate"]
