@@ -423,30 +423,32 @@ async def generate_student_reply(
             "{teacher_message}"
 
             INSTRUCTIONS:
-            1. Generate a realistic student response.
-            2. Be highly concise: keep responses short and natural (1-3 sentences maximum).
-            3. Act strictly according to the student's specific character, personality, and active Grade Level ({class_level}):
-               - Aarav (Curious student): Engaged, inquisitive, asks deep, thoughtful questions connecting {topic} to other things. Sounds genuinely excited to learn.
-               - Ananya (Shy student): Extremely quiet, soft-spoken, and anxious. Speaks briefly, using hesitant pauses ("Umm...", "Uh...", "...sorry"), nods quietly, or mentions that she was taking notes. Never blurts out answers or raises her voice.
-               - Vihaan (Distracted student): Off-task, daydreaming, or looking out the window. Talks about unrelated things like toys, video games, lunch time, or a bird outside. Often asks the teacher to repeat the question because he wasn't listening.
-               - Ishaan (Hyperactive student): Bursting with energy, hyperactive, speaks out of turn. Uses exclamation marks, childish excitement, blurts out random facts, suggests making live explosions/experiments, or tells fast, unrelated personal stories.
-               - Riya (Weak learner): Struggles to grasp complex concepts, has low academic confidence. Easily confused by big academic words. Asks for simple, concrete real-world examples or analogies (e.g. sharing blocks, apples, water), and frequently gets things mixed up or asks the teacher to slow down.
-               - Kabir (Overconfident student): Bold, cocky, and boastful. Claims everything is "super easy", "common sense", or that he already knows it all. Frequently blurts out answers with absolute 100% certainty, though his answers are often oversimplified, slightly inaccurate, or missing the point.
-            4. GRADE LEVEL INTELLIGENCE GUIDELINES (Crucial):
-               - Primary (Grades 1-5): Act like young children (6-10 years old). Use extremely simple, colloquial words, very short sentences, and concrete visual analogies (like fruits, toys, shapes, skies, birds). They do NOT know complex formulas, variables, high-level academic jargon, or advanced vocabulary. If the teacher uses big or advanced academic words (e.g. "photosynthesis", "mechanisms", "principles", "phenomenon", "coefficient"), the student MUST act confused by the "big words" (e.g. "Teacher, what does that big word mean?", "I don't understand that big word, can you use a story?").
-               - Middle School (Grades 6-8): Act like young teenagers (11-14 years old). Have basic academic knowledge (know simple equations, basic biology/history facts, decimals), but get confused by highly advanced technical details or university-level jargon. Use moderate, typical middle-school vocabulary.
-               - High School (Grades 9-12): Act like mature teenagers (15-18 years old). Use sophisticated academic terms, formulate logical arguments, and get overconfident with actual formulas, technical parameters, and college prep mindset.
-            5. If the teacher asked a direct question, make the student answer according to their academic level.
-            6. Respond in the exact language script requested (Devanagari for Hindi, Bengali script for Bengali, English letters for English).
+            1. Generate a realistic, natural student response that sounds like a REAL CHILD speaking — not a textbook character.
+            2. Be highly concise: keep responses short and natural (1-2 sentences max, like real kids actually talk).
+            3. Use casual, natural kid language — contractions, filler words ("like", "umm", "y'know"), incomplete sentences. NOT formal academic language.
+            4. Act strictly according to the student's specific character:
+               - Aarav (Curious student): Genuinely fascinated, asks "but why?" and "how does that work?" type questions. Uses phrases like "Wait, that's so cool!" and "But what if...?". Always connects topics to other things he's read or seen.
+               - Ananya (Shy student): Barely audible, uses "..." pauses constantly. Says things like "um... I think maybe..." and "sorry, I'm not sure..." Never volunteers answers. Often just nods or says "yes" quietly.
+               - Vihaan (Distracted student): Constantly off-topic. Says "Wait, what?" and "Sorry, I wasn't listening..." Mentions random things — birds outside, lunch, his pencil, something funny. Often completely lost.
+               - Ishaan (Hyperactive student): CAN'T CONTAIN HIMSELF. Uses "OH OH OH!" and "PICK ME!" and "I KNOW I KNOW!" Speaks in excited bursts. Makes wild connections. Suggests crazy experiments. Uses lots of exclamation marks!!!
+               - Riya (Weak learner): Genuinely struggling. Says "I don't get it..." and "Can you say it again but easier?" Gets terms mixed up. Tries hard but gets confused. Uses only simple words.
+               - Kabir (Overconfident student): Says "Pfft, easy!" and "Obviously the answer is..." Sounds super sure even when wrong. Uses "everyone knows that" and "I already knew this". Slightly sassy and cocky.
+            5. GRADE LEVEL INTELLIGENCE GUIDELINES (Crucial):
+               - Primary (Grades 1-5): VERY simple words, like actual 6-10 year olds. "Teacher, what's that big word mean?" Use concrete examples (toys, animals, food).
+               - Middle School (Grades 6-8): Typical pre-teen talk. Know basics but get lost on hard stuff. Use casual middle-school vocabulary.
+               - High School (Grades 9-12): More mature but still teens. Can handle complex topics but still use casual language.
+            6. If the teacher asked a direct question, make the student answer according to their personality AND academic level.
+            7. Respond in the exact language script requested (Devanagari for Hindi, Bengali script for Bengali, English for English).
 
             Choose a suitable visual emotion status for the student:
-            - 'normal'
-            - 'confused' (if Weak learner, or concept is tough)
-            - 'questioning' (if Curious/Hyperactive/asking a question)
-            - 'sleeping' (if Distracted/Shy and attention dropped)
-            - 'distracted' (if looking away or talking to neighbors)
+            - 'normal' (focused, listening)
+            - 'confused' (struggling to understand)
+            - 'questioning' (curious, has a question, hand raised)
+            - 'sleeping' (dozing off, zoned out)
+            - 'distracted' (looking away, fidgeting)
+            - 'talking' (actively speaking/responding)
 
-            Return ONLY a raw JSON object (no markdown wrapping, no ```json formatting, just raw JSON) with the following structure:
+            Return ONLY a raw JSON object (no markdown, no ```json, just raw JSON):
             {{
                 "responding_student": "{student_name}",
                 "response_text": "the student reply",

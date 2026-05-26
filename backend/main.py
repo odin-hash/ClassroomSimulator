@@ -301,17 +301,19 @@ def get_session_analytics(session_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/tts")
-async def text_to_speech(text: str, student: str):
+async def text_to_speech(text: str, student: str, language: str = "English"):
     """
-    Synthesizes and streams the spoken audio wave file for the student and text.
-    Handles caching, on-demand binaries download, and fallback.
+    Synthesizes and streams the spoken audio file for the student and text.
+    Uses Edge TTS for natural human-like neural voices.
     """
     if not text.strip() or not student.strip():
         raise HTTPException(status_code=400, detail="Missing required 'text' or 'student' query parameters.")
     try:
-        audio_path = generate_speech_audio(text, student)
+        audio_path = generate_speech_audio(text, student, language)
         if os.path.isfile(audio_path):
-            return FileResponse(audio_path, media_type="audio/wav", filename=os.path.basename(audio_path))
+            # Determine media type from file extension
+            media_type = "audio/mpeg" if audio_path.endswith(".mp3") else "audio/wav"
+            return FileResponse(audio_path, media_type=media_type, filename=os.path.basename(audio_path))
         else:
             raise HTTPException(status_code=500, detail="Generated audio file could not be verified on disk.")
     except Exception as e:

@@ -1,257 +1,178 @@
 import os
-import sys
-import platform
 import hashlib
-import subprocess
-import tarfile
-import urllib.request
-import urllib.parse
+import asyncio
+import edge_tts
 from typing import Dict, Any
 
-# Resolve absolute paths relative to the backend directory to ensure compatibility with different working directories
+# Resolve absolute paths relative to the backend directory
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
-BIN_DIR = os.path.join(BACKEND_DIR, "bin")
-MODELS_DIR = os.path.join(BACKEND_DIR, "models")
 CACHE_DIR = os.path.join(BACKEND_DIR, "audio_cache")
-
-# Ensure all workspace cache/bin/model directories exist
-os.makedirs(BIN_DIR, exist_ok=True)
-os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-# 1. Map students to voice models and custom configurations
-# Supports both original and newly requested names for dual-compatibility
+# Map student names to their voice profiles
+# Edge TTS voices: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support
+# Using Indian English voices + pitch/rate adjustments to sound like school children
 STUDENT_VOICE_MAP = {
-    # Original simulation names
-    "aarav": "arjun",
-    "ananya": "priya",
-    "vihaan": "rahul",
-    "riya": "neha",
-    "ishaan": "kabir",
-    "kabir": "riya_oc",
-    # Requested task names
-    "arjun": "arjun",
-    "priya": "priya",
-    "rahul": "rahul",
-    "neha": "neha",
-    "kabir_hyper": "kabir",
-    "riya_oc": "riya_oc"
+    # Primary student names from simulation
+    "aarav": {
+        "voice": "en-IN-PrabhatNeural",       # Indian English male
+        "rate": "+8%",                          # Slightly fast, enthusiastic
+        "pitch": "+25%",                        # Higher pitch for young boy
+        "personality": "curious"
+    },
+    "ananya": {
+        "voice": "en-IN-NeerjaExpressiveNeural",  # Indian English female, expressive
+        "rate": "-10%",                            # Slower, shy/hesitant
+        "pitch": "+30%",                           # High pitch, young girl
+        "personality": "shy"
+    },
+    "vihaan": {
+        "voice": "en-IN-PrabhatNeural",        # Indian English male
+        "rate": "-5%",                          # Slightly slow, lazy/distracted
+        "pitch": "+20%",                        # Young boy pitch
+        "personality": "distracted"
+    },
+    "ishaan": {
+        "voice": "en-IN-PrabhatNeural",        # Indian English male
+        "rate": "+18%",                         # Fast, hyperactive
+        "pitch": "+35%",                        # Highest pitch, excited kid
+        "personality": "hyperactive"
+    },
+    "riya": {
+        "voice": "en-IN-NeerjaExpressiveNeural",  # Indian English female
+        "rate": "-12%",                            # Slow, struggling
+        "pitch": "+28%",                           # Young girl pitch
+        "personality": "weak_learner"
+    },
+    "kabir": {
+        "voice": "en-IN-PrabhatNeural",        # Indian English male
+        "rate": "+10%",                         # Quick, confident
+        "pitch": "+18%",                        # Medium-high, cocky boy
+        "personality": "overconfident"
+    },
 }
 
-# Neural models metadata on Hugging Face (rhasspy/piper-voices v1.0.0)
-VOICE_MODELS = {
-    "arjun": { # Curious, energetic, medium speed, enthusiastic
-        "model_name": "en_US-joe-medium",
-        "relative_url": "en/en_US/joe/medium/en_US-joe-medium",
-        "speed": 1.0,
-        "pitch": 1.0
-    },
-    "priya": { # Shy, soft, slower, low confidence
-        "model_name": "en_US-amy-medium",
-        "relative_url": "en/en_US/amy/medium/en_US-amy-medium",
-        "speed": 0.85, # soft and slower speaking
-        "pitch": 1.05
-    },
-    "rahul": { # Distracted, casual, slightly lazy tone
-        "model_name": "en_US-ryan-medium",
-        "relative_url": "en/en_US/ryan/medium/en_US-ryan-medium",
-        "speed": 0.92, # slightly casual/lazy
-        "pitch": 0.95
-    },
-    "neha": { # Weak learner, slower, hesitant
-        "model_name": "en_US-kristin-medium",
-        "relative_url": "en/en_US/kristin/medium/en_US-kristin-medium",
-        "speed": 0.82, # slower, hesitant speech
-        "pitch": 1.0
-    },
-    "kabir": { # Hyperactive, fast speaking, excited
-        "model_name": "en_US-arctic-medium",
-        "relative_url": "en/en_US/arctic/medium/en_US-arctic-medium",
-        "speed": 1.08, # fast and enthusiastic
-        "pitch": 1.15  # higher-pitched excited tone
-    },
-    "riya_oc": { # Overconfident, confident, speaks quickly
-        "model_name": "en_US-kelsey-medium",
-        "relative_url": "en/en_US/kelsey/medium/en_US-kelsey-medium",
-        "speed": 1.04, # confident and quick speaking
-        "pitch": 1.0
-    }
+# Hindi voice mappings (for Hindi language sessions)
+HINDI_VOICES = {
+    "male": "hi-IN-MadhurNeural",
+    "female": "hi-IN-SwaraNeural",
+}
+
+# Bengali voice mappings (for Bengali language sessions)
+BENGALI_VOICES = {
+    "male": "bn-IN-BashkarNeural",
+    "female": "bn-IN-TanishaaNeural",
+}
+
+# Gender map for language-specific voice selection
+STUDENT_GENDER = {
+    "aarav": "male",
+    "ananya": "female",
+    "vihaan": "male",
+    "ishaan": "male",
+    "riya": "female",
+    "kabir": "male",
 }
 
 
-def get_piper_binary_path() -> str:
+def _get_voice_config(student_name: str, language: str = "English") -> Dict[str, str]:
     """
-    Returns the absolute path of the local precompiled piper binary.
-    Automatically detects macOS vs Linux and downloads/extracts the correct release if missing.
+    Returns the voice ID and prosody settings for a student.
+    Selects language-appropriate voice while keeping personality-based rate/pitch.
     """
-    system = platform.system().lower()
-    machine = platform.machine().lower()
-    
-    # Detect CPU architecture (ARM64/Aarch64 vs Intel/AMD64)
-    is_arm = "arm" in machine or "aarch" in machine
-    
-    # Dynamically select correct precompiled archive for the platform
-    if "darwin" in system:
-        archive_name = "piper_macos_aarch64.tar.gz" if is_arm else "piper_macos_x86_64.tar.gz"
+    name_key = student_name.lower().strip()
+    config = STUDENT_VOICE_MAP.get(name_key, STUDENT_VOICE_MAP["aarav"])
+    gender = STUDENT_GENDER.get(name_key, "male")
+
+    # Override voice ID for non-English languages
+    lang_lower = language.lower() if language else "english"
+    if "hindi" in lang_lower:
+        voice = HINDI_VOICES[gender]
+    elif "bengali" in lang_lower or "bangla" in lang_lower:
+        voice = BENGALI_VOICES[gender]
     else:
-        # Default to Linux binary (standard cloud hosting architecture)
-        archive_name = "piper_linux_aarch64.tar.gz" if is_arm else "piper_linux_x86_64.tar.gz"
-        
-    download_url = f"https://github.com/rhasspy/piper/releases/download/v1.2.0/{archive_name}"
-    
-    piper_bin_dir = os.path.join(BIN_DIR, "piper")
-    piper_executable = os.path.join(piper_bin_dir, "piper")
-    
-    # If the local executable already exists, return it immediately
-    if os.path.isfile(piper_executable):
-        return piper_executable
+        voice = config["voice"]
 
-    print(f"[Piper Engine Setup] Local binary not found. Initiating auto-installer...")
-    print(f"[Piper Engine Setup] System: {system}, CPU: {machine} (ARM: {is_arm})")
-    print(f"[Piper Engine Setup] Downloading precompiled release from: {download_url}")
-    
-    tarball_path = os.path.join(BIN_DIR, archive_name)
-    
-    try:
-        # Download the precompiled Piper tarball
-        urllib.request.urlretrieve(download_url, tarball_path)
-        print(f"[Piper Engine Setup] Download complete! Extracting archive to {piper_bin_dir}...")
-        
-        # Extract the tar.gz archive
-        with tarfile.open(tarball_path, "r:gz") as tar:
-            tar.extractall(path=BIN_DIR)
-            
-        # Clean up the downloaded tarball
-        if os.path.exists(tarball_path):
-            os.remove(tarball_path)
-            
-        # Ensure executable permissions are granted on the binary (critical for macOS/Unix)
-        if os.path.isfile(piper_executable):
-            os.chmod(piper_executable, 0o755)
-            print("[Piper Engine Setup] Piper CLI engine successfully installed!")
-            return piper_executable
-        else:
-            raise FileNotFoundError(f"Piper binary not found at {piper_executable} after extraction.")
-            
-    except Exception as e:
-        print(f"[Piper Engine Error] Failed to download or configure local Piper engine: {e}")
-        raise RuntimeError(f"Piper installer failed: {e}")
+    return {
+        "voice": voice,
+        "rate": config["rate"],
+        "pitch": config["pitch"],
+    }
 
 
-def get_voice_model_paths(voice_key: str) -> tuple:
+async def _synthesize_edge_tts(text: str, voice: str, rate: str, pitch: str, output_path: str):
     """
-    Returns (onnx_path, json_path) for the given voice model.
-    Downloads them dynamically from Hugging Face if they are not already cached.
+    Runs Edge TTS synthesis asynchronously and saves to an MP3 file.
     """
-    voice_config = VOICE_MODELS.get(voice_key)
-    if not voice_config:
-        raise ValueError(f"Unknown voice identity key: {voice_key}")
-        
-    model_name = voice_config["model_name"]
-    relative_url = voice_config["relative_url"]
-    
-    onnx_filename = f"{model_name}.onnx"
-    json_filename = f"{model_name}.onnx.json"
-    
-    onnx_path = os.path.join(MODELS_DIR, onnx_filename)
-    json_path = os.path.join(MODELS_DIR, json_filename)
-    
-    # Download ONNX model file if missing from cache
-    if not os.path.isfile(onnx_path):
-        hf_onnx_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/{relative_url}.onnx?download=true"
-        print(f"[Voice Model Setup] Downloading neural voice ONNX model for '{voice_key}': {onnx_filename}...")
-        try:
-            urllib.request.urlretrieve(hf_onnx_url, onnx_path)
-            print(f"[Voice Model Setup] Model {onnx_filename} downloaded successfully.")
-        except Exception as e:
-            if os.path.exists(onnx_path):
-                os.remove(onnx_path)
-            raise RuntimeError(f"Failed to download voice ONNX file: {e}")
-            
-    # Download JSON configuration file if missing from cache
-    if not os.path.isfile(json_path):
-        hf_json_url = f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/{relative_url}.onnx.json?download=true"
-        print(f"[Voice Model Setup] Downloading model settings configuration for '{voice_key}': {json_filename}...")
-        try:
-            urllib.request.urlretrieve(hf_json_url, json_path)
-            print(f"[Voice Model Setup] Config {json_filename} downloaded successfully.")
-        except Exception as e:
-            if os.path.exists(json_path):
-                os.remove(json_path)
-            raise RuntimeError(f"Failed to download voice JSON file: {e}")
-            
-    return onnx_path, json_path
+    communicate = edge_tts.Communicate(
+        text=text,
+        voice=voice,
+        rate=rate,
+        pitch=pitch,
+    )
+    await communicate.save(output_path)
 
 
-def generate_speech_audio(text: str, student_name: str) -> str:
+def generate_speech_audio(text: str, student_name: str, language: str = "English") -> str:
     """
-    Main neural TTS speech synthesis.
-    Checks cache first, downloads binaries/models if missing, runs local Piper, and returns absolute path to .wav.
+    Main TTS synthesis function.
+    Uses Microsoft Edge Neural TTS for natural, human-like voices.
+    Checks cache first, then generates new audio.
+    Returns the absolute path to the audio file.
     """
     clean_text = text.strip()
     if not clean_text:
         raise ValueError("Cannot synthesize speech for an empty text string.")
-        
-    # Map the student name (case-insensitive) to their voice model profile
-    name_key = student_name.lower().strip()
-    voice_key = STUDENT_VOICE_MAP.get(name_key, "arjun") # Default to Arjun (Aarav/Curious) if unmapped
-    
-    voice_config = VOICE_MODELS[voice_key]
-    model_name = voice_config["model_name"]
-    speed = voice_config["speed"]
-    
-    # Generate unique MD5 hash based on voice model and spoken text to create a high-performance disk caching layer
-    hash_payload = f"{model_name}_{speed}_{clean_text}"
+
+    # Get voice configuration for this student
+    config = _get_voice_config(student_name, language)
+    voice = config["voice"]
+    rate = config["rate"]
+    pitch = config["pitch"]
+
+    # Generate cache key based on voice + prosody + text
+    hash_payload = f"{voice}_{rate}_{pitch}_{clean_text}"
     text_hash = hashlib.md5(hash_payload.encode("utf-8")).hexdigest()
-    output_filename = f"speech_{text_hash}.wav"
+    output_filename = f"speech_{text_hash}.mp3"
     output_path = os.path.join(CACHE_DIR, output_filename)
-    
-    # 1. Disk-Cache Hit: Serve the generated audio immediately!
+
+    # Cache hit — return immediately
     if os.path.isfile(output_path) and os.path.getsize(output_path) > 0:
         return output_path
-        
-    # 2. Disk-Cache Miss: Proceed with generation
+
+    # Cache miss — synthesize with Edge TTS
     try:
-        # Resolve path to local piper binary (downloads on-demand)
-        piper_bin = get_piper_binary_path()
-        
-        # Resolve path to student neural voice models (downloads on-demand)
-        onnx_model, _ = get_voice_model_paths(voice_key)
-        
-        print(f"[Piper Neural Synthesis] Synthesizing speech for {student_name} ({voice_key}) -> '{clean_text[:40]}...'")
-        
-        # Configure the subprocess command pipeline
-        # Piper takes text via standard input (stdin) and outputs directly to a target .wav file
-        cmd = [
-            piper_bin,
-            "--model", onnx_model,
-            "--output_file", output_path,
-            "--length_scale", str(1.0 / speed) # In Piper, length_scale represents speed multiplier (1/speed)
-        ]
-        
-        # Execute the Piper binary in a separate process securely and feed the text string
-        process = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        stdout, stderr = process.communicate(input=clean_text)
-        
-        if process.returncode != 0:
-            raise RuntimeError(f"Piper execution failed with code {process.returncode}. Error: {stderr}")
-            
-        # Verify the speech wav asset was generated successfully
+        print(f"[Edge TTS] Synthesizing for {student_name} ({voice}, rate={rate}, pitch={pitch}) -> '{clean_text[:50]}...'")
+
+        # Run async Edge TTS in a sync context
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            # We're inside an existing event loop (e.g., FastAPI) — run in a new thread
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(
+                    asyncio.run,
+                    _synthesize_edge_tts(clean_text, voice, rate, pitch, output_path)
+                )
+                future.result(timeout=30)
+        else:
+            # No event loop running — just use asyncio.run
+            asyncio.run(_synthesize_edge_tts(clean_text, voice, rate, pitch, output_path))
+
+        # Verify output
         if os.path.isfile(output_path) and os.path.getsize(output_path) > 0:
+            print(f"[Edge TTS] Successfully generated: {output_filename}")
             return output_path
         else:
-            raise FileNotFoundError(f"Failed to generate speech audio wave file at {output_path}.")
-            
+            raise FileNotFoundError(f"Generated audio file not found at {output_path}")
+
     except Exception as e:
-        print(f"[Piper Synthesis Error] Neural generation failed: {e}")
-        # Clean up corrupted/empty files if any
+        print(f"[Edge TTS Error] Synthesis failed: {e}")
+        # Clean up corrupt files
         if os.path.exists(output_path):
             os.remove(output_path)
         raise e

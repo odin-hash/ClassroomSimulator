@@ -316,9 +316,9 @@ export const Classroom: React.FC<ClassroomProps> = ({
       return;
     }
 
-    // Try playing local neural voice from our offline backend Piper TTS
+    // Try playing neural voice from Edge TTS backend
     try {
-      const audioUrl = `${API_BASE_URL}/api/tts?text=${encodeURIComponent(text)}&student=${encodeURIComponent(studentName)}`;
+      const audioUrl = `${API_BASE_URL}/api/tts?text=${encodeURIComponent(text)}&student=${encodeURIComponent(studentName)}&language=${encodeURIComponent(language)}`;
       const audio = new Audio(audioUrl);
       currentAudioRef.current = audio;
       audio.volume = volume;
@@ -332,8 +332,8 @@ export const Classroom: React.FC<ClassroomProps> = ({
       };
 
       audio.onerror = () => {
-        // Fallback to browser SpeechSynthesis if the local Piper server fails
-        console.warn("[TTS Platform Fallback] Piper failed, routing to browser SpeechSynthesis...");
+        // Fallback to browser SpeechSynthesis if Edge TTS backend fails
+        console.warn("[TTS Fallback] Edge TTS failed, routing to browser SpeechSynthesis...");
         playBrowserSpeechFallback(text, studentName, handleSpeechEnded);
       };
 
