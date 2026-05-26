@@ -23,12 +23,12 @@ interface PastSession {
 
 // Decorative student preview data for the hero section
 const PREVIEW_STUDENTS = [
-  { name: 'Aarav', img: '/students/aarav.png', color: '#FEF3C7' },
-  { name: 'Ananya', img: '/students/ananya.png', color: '#DBEAFE' },
-  { name: 'Vihaan', img: '/students/vihaan.png', color: '#D1FAE5' },
-  { name: 'Ishaan', img: '/students/ishaan.png', color: '#EDE9FE' },
-  { name: 'Riya', img: '/students/riya.png', color: '#FEE2E2' },
-  { name: 'Kabir', img: '/students/kabir.png', color: '#FFEDD5' },
+  { name: 'Aarav', img: '/students/aarav.png', color: '#FEF3C7', comment: 'But why does it work that way? 🤔' },
+  { name: 'Ananya', img: '/students/ananya.png', color: '#DBEAFE', comment: 'Um… I think so… maybe… 😊' },
+  { name: 'Vihaan', img: '/students/vihaan.png', color: '#D1FAE5', comment: 'Wait, what page are we on? 😅' },
+  { name: 'Ishaan', img: '/students/ishaan.png', color: '#EDE9FE', comment: 'I KNOW THIS ONE! Pick me!! 🙋‍♂️' },
+  { name: 'Riya', img: '/students/riya.png', color: '#FEE2E2', comment: 'Can you explain it again slowly? 📖' },
+  { name: 'Kabir', img: '/students/kabir.png', color: '#FFEDD5', comment: 'Easy! The answer is obviously… 😎' },
 ];
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -37,6 +37,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onSelectPastSession,
 }) => {
   const t = TRANSLATIONS[language];
+  const [tappedStudent, setTappedStudent] = useState<string | null>(null);
 
   // Syllabus Dropdown states (initialized from localStorage if available)
   const [selectedSubject, setSelectedSubject] = useState(() => {
@@ -208,27 +209,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="hero-preview-grid animate-in-d3">
           {PREVIEW_STUDENTS.map((s, i) => (
             <div
-              className="preview-student"
+              className={`preview-student ${tappedStudent === s.name ? 'preview-student-active' : ''}`}
               key={s.name}
               style={{
                 background: s.color,
                 animationDelay: `${0.3 + i * 0.06}s`,
               }}
             >
+              {/* Speech bubble on tap */}
+              {tappedStudent === s.name && (
+                <div className="preview-speech-bubble">
+                  {s.comment}
+                </div>
+              )}
               <img
                 src={s.img}
                 alt={s.name}
                 className="preview-student-img"
                 loading="lazy"
               />
-              <span className="preview-student-name">{s.name}</span>
+              <span
+                className="preview-student-name"
+                onClick={() => {
+                  if (tappedStudent === s.name) {
+                    setTappedStudent(null);
+                  } else {
+                    setTappedStudent(s.name);
+                    // Auto-hide after 3 seconds
+                    setTimeout(() => setTappedStudent(prev => prev === s.name ? null : prev), 3000);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                {s.name}
+              </span>
             </div>
           ))}
-
-          {/* Decorative floating chat bubble */}
-          <div className="hero-chat-float">
-            💬 haha, looks very fun 😄
-          </div>
         </div>
       </section>
 
