@@ -33,7 +33,10 @@ class StudentState(Base):
     confidence_level = Column(Integer, default=70)    # 0 to 100
     understanding_level = Column(Integer, default=75) # 0 to 100
     confusion_level = Column(Integer, default=20)     # 0 to 100
-    memory_summary = Column(Text, nullable=True)      # Persistent summary of lesson memory
+    curiosity_level = Column(Integer, default=50)     # 0 to 100 — driven by personality
+    interrupt_probability = Column(Integer, default=20)  # 0 to 100
+    memory_summary = Column(Text, nullable=True)      # Legacy: plain text summary
+    memory_json = Column(Text, nullable=True)          # NEW: structured JSON memory
     participation_count = Column(Integer, default=0)
 
     session = relationship("ClassroomSession", back_populates="student_states")

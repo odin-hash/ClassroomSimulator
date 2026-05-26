@@ -33,3 +33,6 @@ logs/
 .idea/
 .DS_Store
 Thumbs.db
+
+# TTS audio cache
+backend/audio_cache/

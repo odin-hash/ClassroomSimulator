@@ -25,6 +25,12 @@ from schemas import (
 )
 from simulation import STUDENTS, CLASSROOM_EVENTS, select_responding_student, trigger_random_event
 from ai import generate_student_reply, generate_evaluation
+from personality import (
+    STUDENT_PERSONALITIES,
+    select_responders,
+    compute_classroom_state,
+    apply_attention_decay,
+)
 from fastapi.responses import FileResponse
 from voice import generate_speech_audio
 
@@ -77,25 +83,28 @@ def create_session(session_data: ClassroomSessionCreate, db: Session = Depends(g
     db.commit()
     db.refresh(db_session)
 
-    # Populate initial StudentState for each of the 6 students
-    default_states = [
-        {"name": "Aarav", "attention": 90, "confidence": 75, "understanding": 80, "confusion": 10},
-        {"name": "Ananya", "attention": 80, "confidence": 50, "understanding": 70, "confusion": 25},
-        {"name": "Vihaan", "attention": 40, "confidence": 70, "understanding": 60, "confusion": 20},
-        {"name": "Ishaan", "attention": 85, "confidence": 80, "understanding": 75, "confusion": 15},
-        {"name": "Riya", "attention": 75, "confidence": 45, "understanding": 50, "confusion": 40},
-        {"name": "Kabir", "attention": 80, "confidence": 90, "understanding": 70, "confusion": 15},
-    ]
-
-    for ds in default_states:
+    # Populate initial StudentState for each of the 6 students (using personality-driven defaults)
+    import json as _json
+    for s_info in STUDENTS:
+        personality = STUDENT_PERSONALITIES.get(s_info["name"], {})
+        traits = personality.get("traits", {})
         state = StudentState(
             session_id=db_session.id,
-            student_name=ds["name"],
-            attention_level=ds["attention"],
-            confidence_level=ds["confidence"],
-            understanding_level=ds["understanding"],
-            confusion_level=ds["confusion"],
-            memory_summary=f"Class started. Topic: {db_session.topic}. Initial understanding established."
+            student_name=s_info["name"],
+            attention_level=traits.get("attention_base", 75),
+            confidence_level=traits.get("confidence", 65),
+            understanding_level=75,
+            confusion_level=traits.get("confusion_base", 25),
+            curiosity_level=traits.get("curiosity", 50),
+            interrupt_probability=traits.get("interrupt_probability", 20),
+            memory_summary=f"Class started. Topic: {db_session.topic}.",
+            memory_json=_json.dumps({
+                "concepts_taught": [],
+                "questions_asked_by_student": [],
+                "questions_received_from_teacher": [],
+                "key_interactions": [],
+                "last_responses": [],
+            }),
         )
         db.add(state)
     
@@ -119,23 +128,27 @@ def get_session(session_id: int, db: Session = Depends(get_db)):
     
     # Auto-initialize states for existing sessions without student_states
     if not db_session.student_states:
-        default_states = [
-            {"name": "Aarav", "attention": 90, "confidence": 75, "understanding": 80, "confusion": 10},
-            {"name": "Ananya", "attention": 80, "confidence": 50, "understanding": 70, "confusion": 25},
-            {"name": "Vihaan", "attention": 40, "confidence": 70, "understanding": 60, "confusion": 20},
-            {"name": "Ishaan", "attention": 85, "confidence": 80, "understanding": 75, "confusion": 15},
-            {"name": "Riya", "attention": 75, "confidence": 45, "understanding": 50, "confusion": 40},
-            {"name": "Kabir", "attention": 80, "confidence": 90, "understanding": 70, "confusion": 15},
-        ]
-        for ds in default_states:
+        import json as _json
+        for s_info in STUDENTS:
+            personality = STUDENT_PERSONALITIES.get(s_info["name"], {})
+            traits = personality.get("traits", {})
             state = StudentState(
                 session_id=db_session.id,
-                student_name=ds["name"],
-                attention_level=ds["attention"],
-                confidence_level=ds["confidence"],
-                understanding_level=ds["understanding"],
-                confusion_level=ds["confusion"],
-                memory_summary=f"Class started. Topic: {db_session.topic}. Initial understanding established."
+                student_name=s_info["name"],
+                attention_level=traits.get("attention_base", 75),
+                confidence_level=traits.get("confidence", 65),
+                understanding_level=75,
+                confusion_level=traits.get("confusion_base", 25),
+                curiosity_level=traits.get("curiosity", 50),
+                interrupt_probability=traits.get("interrupt_probability", 20),
+                memory_summary=f"Class started. Topic: {db_session.topic}.",
+                memory_json=_json.dumps({
+                    "concepts_taught": [],
+                    "questions_asked_by_student": [],
+                    "questions_received_from_teacher": [],
+                    "key_interactions": [],
+                    "last_responses": [],
+                }),
             )
             db.add(state)
         db.commit()
@@ -213,25 +226,37 @@ async def process_teacher_turn(
                 event_resolved = True
                 active_event_id = None  # event is now cleared!
 
-    # 3. Determine Responding Student
+    # 3. Apply attention decay to all students each turn
+    all_student_states = db.query(StudentState).filter(
+        StudentState.session_id == session_id
+    ).all()
+    apply_attention_decay(all_student_states, current_turn, db)
+
+    # 4. Compute classroom state for smart student selection
+    classroom_state = compute_classroom_state(
+        turn_number=current_turn,
+        session_duration_minutes=db_session.duration_minutes or 15,
+        student_states=all_student_states,
+    )
+
+    # 5. Determine Responding Student(s) using personality-based probabilities
     if turn_input.action == "blackboard_share":
-        # Force Riya (Weak learner) to respond when a blackboard visual aid is shared
-        # (She will say she understands now)
-        responding_student_info = None
-        for s in STUDENTS:
-            if s["name"] == "Riya":
-                responding_student_info = s
-        if not responding_student_info:
-            responding_student_info = select_responding_student(turn_input.message, turn_input.addressed_student)
+        responding_student_info = next((s for s in STUDENTS if s["name"] == "Riya"), STUDENTS[0])
     else:
-        responding_student_info = select_responding_student(turn_input.message, turn_input.addressed_student)
+        responders = select_responders(
+            teacher_message=turn_input.message,
+            addressed_student=turn_input.addressed_student,
+            student_states=all_student_states,
+            classroom_state=classroom_state,
+            students_info=STUDENTS,
+        )
+        responding_student_info = responders[0]["info"] if responders else STUDENTS[0]
     
-    # 4. Determine if we should trigger a new random event (only if no event is currently active)
+    # 6. Determine if we should trigger a new random event (only if no event is currently active)
     new_event_trigger = None
     if not active_event_id:
         new_event_trigger = trigger_random_event(current_turn)
         if new_event_trigger:
-            # Create a system message logging the new event
             event_msg = SessionMessage(
                 session_id=session_id,
                 sender_type="system",
@@ -241,22 +266,16 @@ async def process_teacher_turn(
             db.add(event_msg)
             db.commit()
             
-            # If the event is an interruption, the interrupting student responds first
+            # Events override the responding student
             if new_event_trigger["id"] == "interruption":
-                for s in STUDENTS:
-                    if s["name"] == "Ishaan":
-                        responding_student_info = s
+                responding_student_info = next((s for s in STUDENTS if s["name"] == "Ishaan"), responding_student_info)
             elif new_event_trigger["id"] == "difficult_question":
-                for s in STUDENTS:
-                    if s["name"] == "Aarav":
-                        responding_student_info = s
+                responding_student_info = next((s for s in STUDENTS if s["name"] == "Aarav"), responding_student_info)
             elif new_event_trigger["id"] == "confusion":
-                for s in STUDENTS:
-                    if s["name"] == "Riya":
-                        responding_student_info = s
+                responding_student_info = next((s for s in STUDENTS if s["name"] == "Riya"), responding_student_info)
 
-    # 5. Generate Response Text via LLM (or fallback)
-    print(f"[TURN PROCESS] Session ID: {session_id}, Session Language from DB: {db_session.language}")
+    # 7. Generate Response Text via Personality-Driven AI
+    print(f"[TURN] Session {session_id} | Turn {current_turn} | Student: {responding_student_info['name']} | Energy: {classroom_state['energy_level']}")
     student_reply = await generate_student_reply(
         session_id=session_id,
         db=db,
@@ -335,7 +354,12 @@ async def end_session(session_id: int, db: Session = Depends(get_db)):
     if not transcript:
         raise HTTPException(status_code=400, detail="Cannot analyze an empty session.")
 
-    # Call LLM evaluation
+    # Get student states for evidence-based evaluation
+    eval_student_states = db.query(StudentState).filter(
+        StudentState.session_id == session_id
+    ).all()
+
+    # Call LLM evaluation with real metrics
     eval_result = await generate_evaluation(
         subject=db_session.subject,
         topic=db_session.topic,
@@ -343,7 +367,8 @@ async def end_session(session_id: int, db: Session = Depends(get_db)):
         objectives=db_session.lesson_objectives or "",
         method=db_session.teaching_method or "",
         language=db_session.language,
-        transcript=transcript
+        transcript=transcript,
+        student_states=eval_student_states,
     )
 
     db_analytics = SessionAnalytics(
@@ -503,20 +528,32 @@ async def transcribe_speech(file: UploadFile = File(...)):
     
     errors = []
     
-    # 0. Gemini Speech-to-Text (Primary)
+    # 0. Gemini Speech-to-Text (Primary) — using new google.genai SDK
     if os.environ.get("GEMINI_API_KEY"):
         try:
-            print("[STT] Attempting Gemini Speech-to-Text...")
-            import google.generativeai as genai
-            genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-            model = genai.GenerativeModel("gemini-2.5-flash")
-            response = model.generate_content([
-                {
-                    "mime_type": "audio/webm",
-                    "data": audio_content
-                },
-                "Transcribe this audio. Output only the exact transcribed text, with no extra annotations, prefixes, or commentary. If the audio is empty or contains only noise/silence, output an empty string."
-            ])
+            print("[STT] Attempting Gemini Speech-to-Text (google.genai SDK)...")
+            from google import genai as google_genai
+            import base64
+            stt_client = google_genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+            audio_b64 = base64.standard_b64encode(audio_content).decode("utf-8")
+            response = stt_client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=[
+                    {
+                        "parts": [
+                            {
+                                "inline_data": {
+                                    "mime_type": "audio/webm",
+                                    "data": audio_b64
+                                }
+                            },
+                            {
+                                "text": "Transcribe this audio. Output only the exact transcribed text, with no extra annotations, prefixes, or commentary. If the audio is empty or contains only noise/silence, output an empty string."
+                            }
+                        ]
+                    }
+                ]
+            )
             result = response.text.strip()
             if result:
                 print(f"[STT] Gemini STT Success: '{result}'")
