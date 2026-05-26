@@ -78,7 +78,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
       {/* Animated SVG Avatar with Active Speaker Ring */}
       <div className={`student-avatar-wrapper ${isActiveSpeaker ? 'active-speaker-ring' : ''}`}>
-        <Avatar style={student.avatar_style} emotion={emotion} />
+        <Avatar style={student.avatar_style} emotion={emotion} name={student.name} />
       </div>
 
       {/* Name and Personality */}
