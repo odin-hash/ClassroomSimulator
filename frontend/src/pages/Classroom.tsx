@@ -980,7 +980,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
           </button>
         </div>
         
-        <div className="transcript-body" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="transcript-body">
           {messages.map((m, idx) => {
             const isAction = m.message_text.startsWith('[') && m.message_text.endsWith(']');
             return (
@@ -990,11 +990,11 @@ export const Classroom: React.FC<ClassroomProps> = ({
                 id={`chat-bubble-${idx}`}
               >
                 {m.sender_type !== 'system' && !isAction && (
-                  <div className="chat-name" style={{ fontWeight: 700, fontSize: '0.75rem', marginBottom: '0.15rem' }}>
+                  <div className="chat-name">
                     {m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}
                   </div>
                 )}
-                <div style={{ fontSize: '0.85rem', lineHeight: '1.3' }}>{m.message_text}</div>
+                <div className="chat-text">{m.message_text}</div>
               </div>
             );
           })}
