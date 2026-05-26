@@ -26,6 +26,9 @@ function App() {
       if (!response.ok) throw new Error('Failed to create session');
       
       const data = await response.json();
+      if (data.language) {
+        setLanguage(data.language as Language);
+      }
       setCurrentSessionId(data.id);
       setCurrentPage('classroom');
     } catch (err) {
@@ -35,7 +38,18 @@ function App() {
   };
 
   // Callback to view analytical scorecard of a past session
-  const handleSelectPastSession = (sessionId: number) => {
+  const handleSelectPastSession = async (sessionId: number) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.language) {
+          setLanguage(data.language as Language);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch past session language:", e);
+    }
     setCurrentSessionId(sessionId);
     setCurrentPage('analytics');
   };
