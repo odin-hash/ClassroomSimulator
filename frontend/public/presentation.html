@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Future Classroom Simulator Presentation</title>
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #0a0c16;
+      --bg-card: rgba(20, 24, 46, 0.7);
+      --border-card: rgba(255, 255, 255, 0.08);
+      --text-primary: #f0f0f8;
+      --text-secondary: #a0a5c0;
+      --text-muted: #62688f;
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      --accent-cyan: #06b6d4;
+      --accent-cyan-glow: rgba(6, 182, 212, 0.3);
+      --accent-pink: #d946ef;
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --transition-speed: 0.5s;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Ambient Glowing Backdrops */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      top: -100px;
+      right: -100px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--accent-cyan-glow) 0%, transparent 70%);
+      bottom: -150px;
+      left: -150px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Presentation Wrapper */
+    .deck-container {
+      width: 90vw;
+      height: 85vh;
+      max-width: 1200px;
+      max-height: 800px;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Slide Box */
+    .slide {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px) scale(0.98);
+      transition: all var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Typography & Headers */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .slide-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .slide-tag::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    .slide-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .slide-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #ffffff 0%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Content Layouts */
+    .slide-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      margin: 1.5rem 0;
+    }
+
+    .grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      width: 100%;
+      height: 100%;
+    }
+
+    .grid-3x2 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+      width: 100%;
+      height: 100%;
+    }
+
+    .layout-split {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 2rem;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+    }
+
+    /* Slide 1: Welcome */
+    .welcome-container {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .welcome-logo {
+      width: 80px;
+      height: 80px;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4));
+      animation: pulseLogo 3s ease-in-out infinite;
+    }
+
+    .welcome-title {
+      font-size: 3.8rem;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 30%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,0.3));
+    }
+
+    .welcome-badge {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 9999px;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    /* Cards & Visual components */
+    .card-glass {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .card-glass:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(99, 102, 241, 0.2);
+      transform: translateY(-4px);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .highlight-box {
+      background: rgba(6, 182, 212, 0.04);
+      border-left: 4px solid var(--accent-cyan);
+      border-radius: 4px 16px 16px 4px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    /* Slide 4: Interactive Personas */
+    .persona-grid-interactive {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      width: 100%;
+      height: 100%;
+    }
+
+    .persona-tab {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .persona-tab.active {
+      background: rgba(99, 102, 241, 0.08);
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+    }
+
+    .persona-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      object-fit: cover;
+    }
+
+    .persona-tab.active .persona-avatar {
+      border-color: var(--primary);
+    }
+
+    .persona-details-panel {
+      grid-column: 1 / span 3;
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 16px;
+      padding: 1.25rem;
+      min-height: 140px;
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .stat-badge {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-cyan);
+    }
+
+    /* Slide 5: Technical Pipeline */
+    .pipeline-diagram {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      position: relative;
+      padding: 2rem 0;
+    }
+
+    .pipeline-diagram::before {
+      content: '';
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent-cyan) 50%, var(--primary) 100%);
+      z-index: 1;
+      opacity: 0.3;
+    }
+
+    .pipeline-node {
+      background: #111424;
+      border: 1.5px solid var(--border-card);
+      border-radius: 12px;
+      padding: 1rem;
+      width: 18%;
+      text-align: center;
+      z-index: 2;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .pipeline-node.pulse {
+      animation: nodePulse 2.5s infinite;
+      border-color: var(--primary);
+    }
+
+    .pipeline-node.pulse-cyan {
+      animation: nodePulseCyan 2.5s infinite;
+      animation-delay: 0.8s;
+      border-color: var(--accent-cyan);
+    }
+
+    .pipeline-node-icon {
+      font-size: 1.3rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .pipeline-node-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.2rem;
+    }
+
+    .pipeline-node-desc {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      line-height: 1.3;
+    }
+
+    /* Slide 6: B.Ed Rubrics */
+    .scorecard-panel {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      width: 100%;
+    }
+
+    .rubric-card {
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 1.2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .rubric-card:hover {
+      background: rgba(99, 102, 241, 0.02);
+      border-color: rgba(99, 102, 241, 0.15);
+    }
+
+    .rubric-circle {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      margin: 0 auto 1rem auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      border: 3px solid rgba(99, 102, 241, 0.15);
+      position: relative;
+    }
+
+    .rubric-card:nth-child(1) .rubric-circle { border-color: var(--primary); color: #fff; box-shadow: 0 0 10px rgba(99,102,241,0.2); }
+    .rubric-card:nth-child(2) .rubric-circle { border-color: var(--accent-cyan); color: #fff; box-shadow: 0 0 10px rgba(6,182,212,0.2); }
+    .rubric-card:nth-child(3) .rubric-circle { border-color: var(--color-warning); color: #fff; box-shadow: 0 0 10px rgba(245,158,11,0.2); }
+    .rubric-card:nth-child(4) .rubric-circle { border-color: var(--color-success); color: #fff; box-shadow: 0 0 10px rgba(16,185,129,0.2); }
+
+    .rubric-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+
+    .rubric-desc {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Slide 7: Wow Demo */
+    .demo-step-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.03);
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      margin-bottom: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .demo-step-row:hover {
+      background: rgba(6, 182, 212, 0.03);
+      border-color: rgba(6, 182, 212, 0.15);
+    }
+
+    .demo-time {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-size: 0.95rem;
+      background: rgba(6, 182, 212, 0.08);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+    }
+
+    .demo-step-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+
+    .demo-step-text strong {
+      color: var(--text-primary);
+    }
+
+    /* Presentation Bottom Controls */
+    .controls-panel {
+      width: 90vw;
+      max-width: 1200px;
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .progress-bar-container {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+      margin: 0 2rem;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent-cyan) 100%);
+      border-radius: 2px;
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-control {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-control:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--primary);
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    .btn-control:active {
+      transform: scale(0.95);
+    }
+
+    .btn-text {
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: var(--text-primary);
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-text:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--primary);
+      box-shadow: 0 0 10px rgba(99,102,241,0.1);
+    }
+
+    /* Keyframes */
+    @keyframes pulseLogo {
+      0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4)); }
+      50% { transform: translateY(-5px) scale(1.02); filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.6)); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes nodePulse {
+      0%, 100% { box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+      50% { box-shadow: 0 0 20px 4px rgba(99, 102, 241, 0.25); border-color: rgba(99,102,241,0.7); }
+    }
+
+    @keyframes nodePulseCyan {
+      0%, 100% { box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+      50% { box-shadow: 0 0 20px 4px rgba(6, 182, 212, 0.25); border-color: rgba(6,182,212,0.7); }
+    }
+
+    /* PDF Print Styles (Cmd+P layout override) */
+    @media print {
+      body {
+        height: auto;
+        overflow: visible;
+        background: #fff;
+        color: #000;
+      }
+      body::before, body::after, .controls-panel {
+        display: none !important;
+      }
+      .deck-container {
+        width: 100vw;
+        height: auto;
+        max-width: 100%;
+        max-height: none;
+      }
+      .slide {
+        position: relative !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        page-break-after: always;
+        background: #fff !important;
+        border: 1px solid #ddd !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        margin-bottom: 2rem;
+        height: 100vh;
+      }
+      .slide-title {
+        background: none !important;
+        -webkit-text-fill-color: initial !important;
+        color: #000 !important;
+      }
+      .card-glass, .persona-tab, .persona-details-panel, .pipeline-node, .rubric-card, .demo-step-row {
+        background: #f9f9f9 !important;
+        border: 1px solid #ddd !important;
+        color: #000 !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Slide Deck Container -->
+  <div class="deck-container">
+    
+    <!-- Slide 1: Welcome Title -->
+    <div class="slide active" id="slide-0">
+      <div class="slide-header">
+        <div class="slide-tag">Introducing FCS</div>
+        <div class="slide-num">01 / 07</div>
+      </div>
+      <div class="slide-content">
+        <div class="welcome-container">
+          <!-- Animated Cap Icon -->
+          <svg class="welcome-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10 12 5 2 10l10 5 10-5z"/>
+            <path d="M6 12v5c0 0 2.5 3 6 3s6-3 6-3v-5"/>
+            <line x1="22" y1="10" x2="22" y2="16"/>
+            <circle cx="22" cy="16.5" r="0.5" fill="currentColor"/>
+          </svg>
+          <div class="welcome-badge">Future Classroom Simulator</div>
+          <h1 class="welcome-title">Interactive Training<br>for Modern Educators</h1>
+          <p class="slide-subtitle" style="max-width: 580px; margin: 0 auto;">
+            Bridging the gap between B.Ed pedagogy theory and real-world classroom control using personality-driven AI agents and live speech synthesis.
+          </p>
+        </div>
+      </div>
+      <div style="text-align: center; font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
+        Press SPACE or ARROWS to navigate • F for fullscreen
+      </div>
+    </div>
+
+    <!-- Slide 2: The Pedagogical Distraction Gap -->
+    <div class="slide" id="slide-1">
+      <div class="slide-header">
+        <div class="slide-tag">The Classroom Challenge</div>
+        <div class="slide-num">02 / 07</div>
+      </div>
+      <div>
+        <h2 class="slide-title">The "Theoretical" B.Ed Gap</h2>
+        <p class="slide-subtitle">Traditional teacher training lacks real behavioral complexity and adaptive language preparation.</p>
+      </div>
+      <div class="slide-content">
+        <div class="grid-2x2">
+          <div class="card-glass">
+            <h3 class="card-title" style="color: var(--color-danger);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Low-Stakes Mock Teaching
+            </h3>
+            <p class="card-text">
+              Trainees practice speaking to empty rooms or peer students who act cooperatively. It completely fails to mimic the dynamic chaos of an active Indian classroom.
+            </p>
+          </div>
+          <div class="card-glass">
+            <h3 class="card-title" style="color: var(--color-warning);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Unprepared for Misbehavior
+            </h3>
+            <p class="card-text">
+              Trainees get blindsided by natural classroom disruptions: whispering, attention drop, active interruption, and student confusion.
+            </p>
+          </div>
+          <div class="card-glass" style="grid-column: 1 / span 2;">
+            <h3 class="card-title" style="color: var(--accent-cyan);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              The Accent & Code-Switching Barrier
+            </h3>
+            <p class="card-text">
+              Classrooms in diverse regions require teachers to communicate fluently in mixtures of English, Hindi, and Bengali (Hinglish/Benglish). Without interactive training in local dialects, explanation delivery remains stiff and scripted.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Future Classroom Simulator Presentation • Slide 2</div>
+    </div>
+
+    <!-- Slide 3: The Interactive Sandbox -->
+    <div class="slide" id="slide-2">
+      <div class="slide-header">
+        <div class="slide-tag">The Innovation</div>
+        <div class="slide-num">03 / 07</div>
+      </div>
+      <div>
+        <h2 class="slide-title">The Immersive Sandbox Solution</h2>
+        <p class="slide-subtitle">A real-time behavioral training environment equipped with dynamic orchestration tools.</p>
+      </div>
+      <div class="slide-content">
+        <div class="layout-split">
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="card-glass">
+              <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Persistent Persona Agents
+              </h3>
+              <p class="card-text">
+                6 persistent virtual students—Aarav, Ananya, Kabir, Ishaan, Riya, and Vihaan—each possessing persistent psychological parameters (curiosity, confidence, active attention) and custom speech engines.
+              </p>
+            </div>
+            <div class="card-glass">
+              <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-cyan);"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                Accented Code-Switching Voice Input
+              </h3>
+              <p class="card-text">
+                Trainees lead sessions using their natural teaching accents in English, Hindi, or Bengali. Dynamic STT accurately transcribes code-switched mixtures into native scripts.
+              </p>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="card-glass" style="height: 100%; justify-content: space-between;">
+              <div>
+                <h3 class="card-title" style="color: var(--accent-pink);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M21 9H3"/><path d="M21 15H3"/><path d="M12 3v18"/></svg>
+                  Interactive Classroom Controls
+                </h3>
+                <p class="card-text" style="margin-top: 0.5rem; font-size: 0.85rem;">
+                  A multi-mode sandbox workspace letting trainees direct custom lessons, sketch presets on the interactive whiteboard, warning disruptive students, and simple explanations to re-engage shy pupils in real-time.
+                </p>
+              </div>
+              <div class="highlight-box">
+                <p style="font-size: 0.8rem; color: var(--accent-cyan); font-weight: 700; margin-bottom: 0.25rem;">Live Behavioral Events</p>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.45;">
+                  Simulates random, high-fidelity occurrences (e.g., student zoning out or asking highly challenging curricular questions) to test classroom reflex skills.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Future Classroom Simulator Presentation • Slide 3</div>
+    </div>
+
+    <!-- Slide 4: Interactive Personas DNA -->
+    <div class="slide" id="slide-3">
+      <div class="slide-header">
+        <div class="slide-tag">AI Persona DNA</div>
+        <div class="slide-num">04 / 07</div>
+      </div>
+      <div>
+        <h2 class="slide-title">Meet the Virtual Students</h2>
+        <p class="slide-subtitle">Click on any virtual student below to inspect their custom AI DNA profile, traits, and speech patterns.</p>
+      </div>
+      <div class="slide-content">
+        <div class="persona-grid-interactive">
+          <!-- Persona 1: Aarav -->
+          <div class="persona-tab active" onclick="selectPersona('aarav', this)">
+            <img src="students/aarav.png" class="persona-avatar" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=aarav'">
+            <div style="text-align: left;">
+              <p style="font-weight: 700; font-size: 0.95rem;">Aarav</p>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">Overefficient</p>
+            </div>
+          </div>
+          <!-- Persona 2: Ananya -->
+          <div class="persona-tab" onclick="selectPersona('ananya', this)">
+            <img src="students/ananya.png" class="persona-avatar" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=ananya'">
+            <div style="text-align: left;">
+              <p style="font-weight: 700; font-size: 0.95rem;">Ananya</p>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">Active Curiosity</p>
+            </div>
+          </div>
+          <!-- Persona 3: Kabir -->
+          <div class="persona-tab" onclick="selectPersona('kabir', this)">
+            <img src="students/kabir.png" class="persona-avatar" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=kabir'">
+            <div style="text-align: left;">
+              <p style="font-weight: 700; font-size: 0.95rem;">Kabir</p>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">Distracted / Unfocused</p>
+            </div>
+          </div>
+          
+          <!-- Detailed Info Panel -->
+          <div class="persona-details-panel" id="persona-details-box">
+            <!-- Dynamic Injection -->
+            <div style="width: 55px; height: 55px; border-radius: 50%; background: var(--primary-glow); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;" id="persona-detail-icon">🎓</div>
+            <div style="flex: 1; text-align: left;">
+              <h4 style="font-weight: 800; font-size: 1.15rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.6rem;">
+                <span id="p-name">Aarav</span>
+                <span class="stat-badge" id="p-role">Overconfident Student</span>
+              </h4>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.5rem;" id="p-desc">
+                High confidence and curiosity. Speaks fast and loves to challenge the teacher with complex out-of-syllabus questions. High sensitivity to explanation quality.
+              </p>
+              <div style="display: flex; gap: 0.5rem;" id="p-stats">
+                <span class="stat-badge" style="color: var(--color-success)">Curiosity: 85/100</span>
+                <span class="stat-badge" style="color: var(--primary)">Confidence: 90/100</span>
+                <span class="stat-badge" style="color: var(--color-warning)">Speech Style: Precocious, Fast</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Future Classroom Simulator Presentation • Slide 4</div>
+    </div>
+
+    <!-- Slide 5: Technical Pipeline -->
+    <div class="slide" id="slide-4">
+      <div class="slide-header">
+        <div class="slide-tag">Technical Pipeline</div>
+        <div class="slide-num">05 / 07</div>
+      </div>
+      <div>
+        <h2 class="slide-title">The Real-Time AI Pipeline</h2>
+        <p class="slide-subtitle">Under the hood: A low-latency feedback loop powering classroom state and speech synthesis.</p>
+      </div>
+      <div class="slide-content">
+        <div class="pipeline-diagram">
+          
+          <!-- Node 1 -->
+          <div class="pipeline-node pulse">
+            <div class="pipeline-node-icon">🎤</div>
+            <div class="pipeline-node-title">Teacher Input</div>
+            <div class="pipeline-node-desc">Voice / Text in native accent routed to dynamic STT engine.</div>
+          </div>
+          
+          <!-- Node 2 -->
+          <div class="pipeline-node pulse-cyan">
+            <div class="pipeline-node-icon">📉</div>
+            <div class="pipeline-node-title">State Engine</div>
+            <div class="pipeline-node-desc">Applies attention decays, confusion levels, and triggers random events.</div>
+          </div>
+          
+          <!-- Node 3 -->
+          <div class="pipeline-node pulse">
+            <div class="pipeline-node-icon">🎯</div>
+            <div class="pipeline-node-title">Persona Router</div>
+            <div class="pipeline-node-desc">Determines which of the 6 students responds based on personality profiles.</div>
+          </div>
+          
+          <!-- Node 4 -->
+          <div class="pipeline-node pulse-cyan">
+            <div class="pipeline-node-icon">🧠</div>
+            <div class="pipeline-node-title">Gemini 2.0</div>
+            <div class="pipeline-node-desc">Generates raw JSON response containing emotional delta, response, and memory updates.</div>
+          </div>
+          
+          <!-- Node 5 -->
+          <div class="pipeline-node pulse">
+            <div class="pipeline-node-icon">🔊</div>
+            <div class="pipeline-node-title">Edge Neural TTS</div>
+            <div class="pipeline-node-desc">Streams student's voice using dynamic pitch shifting per student.</div>
+          </div>
+          
+        </div>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Future Classroom Simulator Presentation • Slide 5</div>
+    </div>
+
+    <!-- Slide 6: B.Ed Rubrics scorecard -->
+    <div class="slide" id="slide-5">
+      <div class="slide-header">
+        <div class="slide-tag">Pedagogical Evaluation</div>
+        <div class="slide-num">06 / 07</div>
+      </div>
+      <div>
+        <h2 class="slide-title">Instant B.Ed Scorecard</h2>
+        <p class="slide-subtitle">Trainees receive immediate evaluation and feedback based on national teacher education rubrics.</p>
+      </div>
+      <div class="slide-content">
+        <div class="scorecard-panel">
+          
+          <!-- Rubric 1 -->
+          <div class="rubric-card">
+            <div class="rubric-circle">90</div>
+            <div class="rubric-title">Clarity & Communication</div>
+            <div class="rubric-desc">
+              Measures concept explanation quality, vocabulary choice, and grade-appropriate scaffolding.
+            </div>
+          </div>
+          
+          <!-- Rubric 2 -->
+          <div class="rubric-card">
+            <div class="rubric-circle">85</div>
+            <div class="rubric-title">Student Engagement</div>
+            <div class="rubric-desc">
+              Scores how effectively the teacher managed distracted students and included quiet students.
+            </div>
+          </div>
+          
+          <!-- Rubric 3 -->
+          <div class="rubric-card">
+            <div class="rubric-circle">78</div>
+            <div class="rubric-title">Time Management</div>
+            <div class="rubric-desc">
+              Evaluates pace, lesson milestone alignment, and active time management.
+            </div>
+          </div>
+          
+          <!-- Rubric 4 -->
+          <div class="rubric-card">
+            <div class="rubric-circle">92</div>
+            <div class="rubric-title">Question Handling</div>
+            <div class="rubric-desc">
+              Scores pedagogical response quality to student interruptions, confusion, and challenging questions.
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      <div class="highlight-box" style="margin: 0 auto; width: 100%; text-align: left; background: rgba(16, 185, 129, 0.03); border-color: var(--color-success);">
+        <p style="font-size: 0.8rem; color: var(--color-success); font-weight: 700; margin-bottom: 0.15rem;">📈 Actionable Growth Feedback</p>
+        <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+          "Excellent use of localized Hindi terms during the physics demonstration. However, Kabir remained zoned out for 3 consecutive turns. Consider using a direct 're-engage' command earlier to scaffold his participation."
+        </p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Wow Demo Script -->
+    <div class="slide" id="slide-6">
+      <div class="slide-header">
+        <div class="slide-tag">Presentation Blueprint</div>
+        <div class="slide-num">07 / 07</div>
+      </div>
+      <div>
+        <h2 class="slide-title">Delivering a Wow-Factor Demo</h2>
+        <p class="slide-subtitle">Use this optimized 3-minute sequence during a live panel presentation to showcase all core features.</p>
+      </div>
+      <div class="slide-content">
+        <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+          
+          <div class="demo-step-row">
+            <div class="demo-time">0:00 - 0:45</div>
+            <div class="demo-step-text">
+              <strong>Initialization:</strong> Open the dashboard. Select <strong>हिंदी (Hindi)</strong> or <strong>বাংলা (Bengali)</strong> class language to instantly capture the panel's attention. Click **Start Session**.
+            </div>
+          </div>
+          
+          <div class="demo-step-row">
+            <div class="demo-time">0:45 - 1:30</div>
+            <div class="demo-step-text">
+              <strong>Microphone & STT Test:</strong> Click the microphone. Speak a natural sentence in Hindi/Bengali (e.g. asking about gravity). Point out the flawless Devanagari/Bengali transcription in the text bar.
+            </div>
+          </div>
+          
+          <div class="demo-step-row">
+            <div class="demo-time">1:30 - 2:15</div>
+            <div class="demo-step-text">
+              <strong>Neural Student Reply:</strong> Let the student respond. Highlight the natural, child-like neural voice of the responding student card and their synchronized emotion indicator delta.
+            </div>
+          </div>
+          
+          <div class="demo-step-row">
+            <div class="demo-time">2:15 - 3:00</div>
+            <div class="demo-step-text">
+              <strong>Event Resolution & Scorecard:</strong> Wait for a random behavioral event (e.g. confusion). Click the student's card and apply a **Teacher Action** to resolve it. Then end the session and present the B.Ed scorecard!
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Future Classroom Simulator Presentation • End Slide</div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation Panel -->
+  <div class="controls-panel">
+    <button class="btn-text" onclick="window.print()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print to PDF
+    </button>
+    
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progress-bar"></div>
+    </div>
+    
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <button class="btn-control" id="prev-btn" onclick="navigate(-1)">◀</button>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; width: 45px; text-align: center;" id="slide-indicator">1 / 7</span>
+      <button class="btn-control" id="next-btn" onclick="navigate(1)">▶</button>
+    </div>
+  </div>
+
+  <!-- Interactive Slide Navigation Script -->
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+    const totalSlides = slides.length;
+    
+    // Select Elements
+    const progressBar = document.getElementById('progress-bar');
+    const slideIndicator = document.getElementById('slide-indicator');
+    
+    // Update Progress
+    function updateProgress() {
+      slides.forEach((slide, idx) => {
+        if (idx === currentSlide) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+      
+      const percentage = (currentSlide / (totalSlides - 1)) * 100;
+      progressBar.style.width = `${percentage}%`;
+      slideIndicator.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    }
+
+    // Navigation
+    function navigate(direction) {
+      currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+      updateProgress();
+    }
+
+    // Key Listeners
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        navigate(1);
+      } else if (e.key === 'ArrowLeft') {
+        navigate(-1);
+      } else if (e.key.toLowerCase() === 'f') {
+        // Toggle Fullscreen
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.error(`Error enabling full-screen mode: ${err.message}`);
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      }
+    });
+
+    // Tap to advance
+    slides.forEach((slide) => {
+      slide.addEventListener('click', (e) => {
+        // Only advance if clicking empty space or elements without direct click events
+        if (!e.target.closest('button') && !e.target.closest('.persona-tab')) {
+          navigate(1);
+        }
+      });
+    });
+
+    // Persona DNA Database
+    const personas = {
+      aarav: {
+        name: "Aarav",
+        role: "Overconfident Student",
+        desc: "High confidence and curiosity. Speaks fast and loves to challenge the teacher with complex out-of-syllabus questions. High sensitivity to explanation quality.",
+        stats: ["Curiosity: 85/100", "Confidence: 90/100", "Speech Style: Precocious, Fast"],
+        icon: "👦"
+      },
+      ananya: {
+        name: "Ananya",
+        role: "Curious student",
+        desc: "Extremely attentive and curious. Always asks follow-up conceptual questions and tries to explain ideas to classmates. Responds quickly in Hindi/English.",
+        stats: ["Curiosity: 95/100", "Confidence: 75/100", "Speech Style: Enthusiastic, questioning"],
+        icon: "👧"
+      },
+      kabir: {
+        name: "Kabir",
+        role: "Distracted student",
+        desc: "Frequently zones out, daydreams, or draws inside his notebook. Requires direct interventions (e.g. calling his name) to restore his active attention parameter.",
+        stats: ["Curiosity: 45/100", "Confidence: 60/100", "Speech Style: Slow, easily startled"],
+        icon: "🧑"
+      }
+    };
+
+    function selectPersona(id, tabElement) {
+      // Toggle Tabs
+      document.querySelectorAll('.persona-tab').forEach(tab => tab.classList.remove('active'));
+      tabElement.classList.add('active');
+      
+      // Update Panel Details
+      const data = personas[id];
+      document.getElementById('p-name').textContent = data.name;
+      document.getElementById('p-role').textContent = data.role;
+      document.getElementById('p-desc').textContent = data.desc;
+      document.getElementById('persona-detail-icon').textContent = data.icon;
+      
+      const statsContainer = document.getElementById('p-stats');
+      statsContainer.innerHTML = '';
+      data.stats.forEach((stat, idx) => {
+        const span = document.createElement('span');
+        span.className = 'stat-badge';
+        if (idx === 0) span.style.color = 'var(--color-success)';
+        else if (idx === 1) span.style.color = 'var(--primary)';
+        else span.style.color = 'var(--color-warning)';
+        span.textContent = stat;
+        statsContainer.appendChild(span);
+      });
+    }
+
+    // Initialize Progress
+    updateProgress();
+  </script>
+</body>
+</html>
