@@ -17,37 +17,37 @@ STUDENT_VOICE_MAP = {
     "aarav": {
         "voice": "en-IN-PrabhatNeural",       # Indian English male
         "rate": "+8%",                          # Slightly fast, enthusiastic
-        "pitch": "+25%",                        # Higher pitch for young boy
+        "pitch": "+12Hz",                       # Higher pitch for young boy
         "personality": "curious"
     },
     "ananya": {
         "voice": "en-IN-NeerjaExpressiveNeural",  # Indian English female, expressive
         "rate": "-10%",                            # Slower, shy/hesitant
-        "pitch": "+30%",                           # High pitch, young girl
+        "pitch": "+16Hz",                          # High pitch, young girl
         "personality": "shy"
     },
     "vihaan": {
         "voice": "en-IN-PrabhatNeural",        # Indian English male
         "rate": "-5%",                          # Slightly slow, lazy/distracted
-        "pitch": "+20%",                        # Young boy pitch
+        "pitch": "+8Hz",                        # Young boy pitch
         "personality": "distracted"
     },
     "ishaan": {
         "voice": "en-IN-PrabhatNeural",        # Indian English male
         "rate": "+18%",                         # Fast, hyperactive
-        "pitch": "+35%",                        # Highest pitch, excited kid
+        "pitch": "+20Hz",                       # Highest pitch, excited kid
         "personality": "hyperactive"
     },
     "riya": {
         "voice": "en-IN-NeerjaExpressiveNeural",  # Indian English female
         "rate": "-12%",                            # Slow, struggling
-        "pitch": "+28%",                           # Young girl pitch
+        "pitch": "+14Hz",                          # Young girl pitch
         "personality": "weak_learner"
     },
     "kabir": {
         "voice": "en-IN-PrabhatNeural",        # Indian English male
         "rate": "+10%",                         # Quick, confident
-        "pitch": "+18%",                        # Medium-high, cocky boy
+        "pitch": "+5Hz",                        # Medium-high, cocky boy
         "personality": "overconfident"
     },
 }
