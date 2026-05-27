@@ -615,6 +615,7 @@
       }
       
       .slide-content {
+        display: block !important; /* Reset display: flex to block layout to prevent vertical centering scroll clip bug on mobile */
         margin: 0.5rem 0;
         overflow-y: auto;
         max-height: calc(100% - 75px);
