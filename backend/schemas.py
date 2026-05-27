@@ -8,6 +8,7 @@ class SessionMessageBase(BaseModel):
     sender_name: str
     message_text: str
     student_personality: Optional[str] = None
+    provider: Optional[str] = None
 
 
 class SessionMessageCreate(SessionMessageBase):

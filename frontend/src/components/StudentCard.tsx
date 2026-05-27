@@ -13,6 +13,7 @@ interface StudentCardProps {
   isActiveSpeaker: boolean;
   bubbleText: string | null;
   onAction: (studentName: string, actionType: string) => void;
+  provider?: string | null;
 }
 
 export const StudentCard: React.FC<StudentCardProps> = ({
@@ -21,6 +22,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   isActiveSpeaker,
   bubbleText,
   onAction,
+  provider,
 }) => {
   const [showTouchActions, setShowTouchActions] = React.useState(false);
 
@@ -71,7 +73,30 @@ export const StudentCard: React.FC<StudentCardProps> = ({
               <span></span>
             </div>
           ) : (
-            bubbleText
+            <>
+              {bubbleText}
+              {provider && (
+                <div 
+                  className="bubble-provider" 
+                  style={{ 
+                    fontSize: '0.58rem', 
+                    fontWeight: 700, 
+                    marginTop: '6px', 
+                    color: provider === 'gemini' ? '#3b82f6' : provider === 'groq' ? '#a855f7' : '#71717a',
+                    borderTop: '1px solid var(--border-card)',
+                    paddingTop: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    justifyContent: 'flex-end',
+                    opacity: 0.85
+                  }}
+                >
+                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: provider === 'gemini' ? '#3b82f6' : provider === 'groq' ? '#a855f7' : '#71717a' }}></span>
+                  via {provider === 'gemini' ? 'Gemini 2.0' : provider === 'groq' ? 'Groq (Llama)' : provider === 'template' ? 'Template' : provider}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

@@ -51,6 +51,7 @@ class SessionMessage(Base):
     sender_name = Column(String, nullable=False)  # "Teacher", student name, or "System"
     message_text = Column(Text, nullable=False)
     student_personality = Column(String, nullable=True)  # 'Curious', 'Shy', etc.
+    provider = Column(String, nullable=True)  # 'gemini', 'groq', 'template', etc.
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     session = relationship("ClassroomSession", back_populates="messages")

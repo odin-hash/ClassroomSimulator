@@ -28,6 +28,7 @@ interface Message {
   sender_name: string;
   message_text: string;
   student_personality?: string;
+  provider?: string;
 }
 
 interface EventDetail {
@@ -57,6 +58,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
   const [studentEmotions, setStudentEmotions] = useState<Record<string, any>>({});
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
   const [activeSpeakerText, setActiveSpeakerText] = useState<string | null>(null);
+  const [activeSpeakerProvider, setActiveSpeakerProvider] = useState<string | null>(null);
   const [activeEvent, setActiveEvent] = useState<EventDetail | null>(null);
   
   // Input and API status states
@@ -84,7 +86,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
   // Audio queue and volume states for premium neural voice playback
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.85);
-  const audioQueueRef = useRef<{ text: string; studentName: string; emotion: string }[]>([]);
+  const audioQueueRef = useRef<{ text: string; studentName: string; emotion: string; provider?: string }[]>([]);
   const isAudioPlayingRef = useRef(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const originalEmotionsRef = useRef<Record<string, string>>({});
@@ -271,9 +273,9 @@ export const Classroom: React.FC<ClassroomProps> = ({
   }, []);
 
   // 5. Text-To-Speech (TTS) Voice Handler with Queuing & Piper Backend Support
-  const speakStudentResponse = (text: string, studentName: string, emotion: string) => {
+  const speakStudentResponse = (text: string, studentName: string, emotion: string, provider?: string) => {
     // Queue the spoken item
-    audioQueueRef.current.push({ text, studentName, emotion });
+    audioQueueRef.current.push({ text, studentName, emotion, provider });
     
     // If not already playing, start the playback process immediately
     if (!isAudioPlayingRef.current) {
@@ -305,7 +307,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
     }
 
     isAudioPlayingRef.current = true;
-    const { text, studentName, emotion } = audioQueueRef.current[0];
+    const { text, studentName, emotion, provider } = audioQueueRef.current[0];
 
     // 1. Temporarily save the student's emotion to restore later
     setStudentEmotions((prev) => {
@@ -320,6 +322,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
     // Trigger active speaker bubble in the UI
     setActiveSpeaker(studentName);
     setActiveSpeakerText(text);
+    setActiveSpeakerProvider(provider || null);
 
     // Helper to cleanup and play next
     const handleSpeechEnded = () => {
@@ -335,6 +338,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
         setActiveSpeakerText((prevText) => {
           if (prevText === text) {
             setActiveSpeaker(null);
+            setActiveSpeakerProvider(null);
             return null;
           }
           return prevText;
@@ -692,12 +696,14 @@ export const Classroom: React.FC<ClassroomProps> = ({
             sender_name: reply.sender_name,
             message_text: reply.message_text,
             student_personality: reply.student_personality,
+            provider: reply.provider,
           },
         ]);
 
         // Update speaker state & trigger bubble text above avatar
         setActiveSpeaker(reply.sender_name);
         setActiveSpeakerText(reply.message_text);
+        setActiveSpeakerProvider(reply.provider || null);
 
         // Update emotions
         setStudentEmotions((prev) => {
@@ -713,13 +719,14 @@ export const Classroom: React.FC<ClassroomProps> = ({
         });
 
         // Trigger TTS to voice the student response
-        speakStudentResponse(reply.message_text, reply.sender_name, reply.emotion);
+        speakStudentResponse(reply.message_text, reply.sender_name, reply.emotion, reply.provider);
 
         // Clear active speaker bubble text after 5 seconds
         setTimeout(() => {
           setActiveSpeakerText((prevText) => {
             if (prevText === reply.message_text) {
               setActiveSpeaker(null);
+              setActiveSpeakerProvider(null);
               return null;
             }
             return prevText;
@@ -1213,6 +1220,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
                           : null
                     }
                     onAction={handleStudentAction}
+                    provider={activeSpeaker === s.name ? activeSpeakerProvider : null}
                   />
                 ))}
               </div>
@@ -1243,6 +1251,7 @@ export const Classroom: React.FC<ClassroomProps> = ({
                             : null
                       }
                       onAction={handleStudentAction}
+                      provider={activeSpeaker === s.name ? activeSpeakerProvider : null}
                     />
                   ))}
                 </div>
@@ -1279,8 +1288,26 @@ export const Classroom: React.FC<ClassroomProps> = ({
                 id={`chat-bubble-${idx}`}
               >
                 {m.sender_type !== 'system' && !isAction && (
-                  <div className="chat-name">
-                    {m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}
+                  <div className="chat-name" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
+                    <span>{m.sender_name} {m.student_personality ? `(${m.student_personality})` : ''}</span>
+                    {m.provider && (
+                      <span 
+                        className={`provider-badge ${m.provider}`} 
+                        style={{ 
+                          fontSize: '0.62rem', 
+                          padding: '0.08rem 0.35rem', 
+                          borderRadius: '12px', 
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.02em',
+                          background: m.provider === 'gemini' ? 'rgba(59, 130, 246, 0.12)' : m.provider === 'groq' ? 'rgba(168, 85, 247, 0.12)' : 'rgba(107, 114, 128, 0.12)',
+                          color: m.provider === 'gemini' ? '#3b82f6' : m.provider === 'groq' ? '#a855f7' : '#6b7280',
+                          border: m.provider === 'gemini' ? '1px solid rgba(59, 130, 246, 0.2)' : m.provider === 'groq' ? '1px solid rgba(168, 85, 247, 0.2)' : '1px solid rgba(107, 114, 128, 0.2)'
+                        }}
+                      >
+                        {m.provider === 'gemini' ? 'Gemini 2.0' : m.provider === 'groq' ? 'Groq (Llama)' : m.provider === 'template' ? 'Template' : m.provider}
+                      </span>
+                    )}
                   </div>
                 )}
                 <div className="chat-text">{m.message_text}</div>

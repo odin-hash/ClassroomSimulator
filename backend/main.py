@@ -52,6 +52,7 @@ try:
             ("sessions", "lesson_objectives", "TEXT"),
             ("sessions", "teaching_method", "VARCHAR(100)"),
             ("session_messages", "student_personality", "VARCHAR(100)"),
+            ("session_messages", "provider", "VARCHAR(100)"),
         ]:
             try:
                 conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}"))
@@ -324,6 +325,7 @@ async def process_teacher_turn(
         sender_name=responding_student_info["name"],
         message_text=student_reply["response_text"],
         student_personality=responding_student_info["personality"],
+        provider=student_reply.get("provider", "unknown"),
     )
     db.add(student_msg)
     db.commit()
@@ -349,7 +351,8 @@ async def process_teacher_turn(
             "sender_type": "student",
             "message_text": student_reply["response_text"],
             "student_personality": responding_student_info["personality"],
-            "emotion": student_reply["emotion"]
+            "emotion": student_reply["emotion"],
+            "provider": student_reply.get("provider", "unknown")
         },
         "triggered_event": new_event_trigger,
         "active_event_id": active_event_id if not new_event_trigger else new_event_trigger["id"],
