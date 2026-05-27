@@ -744,31 +744,50 @@
       }
       
       /* Rubrics Scorecard Mobile Adjustments */
+      .scorecard-panel {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+      }
+
       .rubric-card {
         padding: 0.85rem !important;
-        border-radius: 12px !important;
-        display: flex !important;
+        border-radius: 16px !important;
+        display: grid !important;
+        grid-template-columns: auto 1fr !important;
+        grid-template-rows: auto auto !important;
+        gap: 0.2rem 1rem !important;
         align-items: center !important;
         text-align: left !important;
-        gap: 1rem !important;
+        min-height: unset !important;
       }
       
       .rubric-circle {
-        width: 44px !important;
-        height: 44px !important;
+        grid-column: 1 !important;
+        grid-row: 1 / span 2 !important;
+        width: 48px !important;
+        height: 48px !important;
         margin: 0 !important;
-        font-size: 0.95rem !important;
+        font-size: 1.05rem !important;
         border-width: 2px !important;
+        flex-shrink: 0 !important;
       }
       
       .rubric-title {
-        font-size: 0.85rem !important;
-        margin-bottom: 0.15rem !important;
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
       }
       
       .rubric-desc {
-        font-size: 0.68rem !important;
-        line-height: 1.35;
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+        font-size: 0.72rem !important;
+        line-height: 1.35 !important;
+        color: var(--text-secondary) !important;
+        margin: 0 !important;
       }
       
       /* Demo Step Mobile Adjustments */
