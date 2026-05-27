@@ -208,6 +208,49 @@ export const Classroom: React.FC<ClassroomProps> = ({
 
       rec.onerror = (e: any) => {
         console.error('Native speech recognition error:', e);
+        if (e.error === 'language-not-supported') {
+          console.warn(`[STT] Language ${rec.lang} is not supported by this browser. Aborting and falling back to en-IN...`);
+          try { rec.abort(); } catch {}
+          setIsListening(false);
+          
+          // Re-initialize with en-IN fallback after the abort completes
+          setTimeout(() => {
+            const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (SpeechRecognitionClass) {
+              const fallbackRec = new SpeechRecognitionClass();
+              fallbackRec.continuous = false;
+              fallbackRec.interimResults = false;
+              fallbackRec.lang = 'en-IN';
+              
+              fallbackRec.onstart = () => {
+                setIsListening(true);
+              };
+              fallbackRec.onresult = (event: any) => {
+                const transcriptText = event.results[0][0].transcript;
+                setTeacherInput(transcriptText);
+                if (transcriptText.trim()) {
+                  console.info("[Native Mic Auto-Send] Speech recognized (fallback en-IN):", transcriptText);
+                  handleSendTurnRef.current?.(transcriptText);
+                }
+              };
+              fallbackRec.onerror = (err: any) => {
+                console.error('Fallback SpeechRecognition error:', err);
+                setIsListening(false);
+              };
+              fallbackRec.onend = () => {
+                setIsListening(false);
+              };
+              
+              recognitionRef.current = fallbackRec;
+              try {
+                fallbackRec.start();
+              } catch (startErr) {
+                console.error('Failed to start fallback SpeechRecognition:', startErr);
+              }
+            }
+          }, 150);
+          return;
+        }
         setIsListening(false);
       };
 
@@ -806,7 +849,8 @@ export const Classroom: React.FC<ClassroomProps> = ({
       formData.append('file', audioBlob, `speech.${fileExtension}`);
 
       console.info(`[STT] Uploading recorded speech (${mimeType}) to /api/transcribe...`);
-      const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
+      // Pass the active classroom language to configure the server-side STT engine accurately
+      const response = await fetch(`${API_BASE_URL}/api/transcribe?language=${encodeURIComponent(language)}`, {
         method: 'POST',
         headers: {
           'X-Audio-Mime-Type': mimeType

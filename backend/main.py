@@ -449,7 +449,7 @@ async def text_to_speech(text: str, student: str, language: str = "English"):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def transcribe_google(audio_content: bytes, mime_type: str = "audio/webm") -> str:
+def transcribe_google(audio_content: bytes, mime_type: str = "audio/webm", language: Optional[str] = None) -> str:
     import sys
     from google.cloud import speech
     client = speech.SpeechClient()
@@ -466,11 +466,20 @@ def transcribe_google(audio_content: bytes, mime_type: str = "audio/webm") -> st
         encoding = speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED
         sample_rate_hertz = None
         
+    # Map classroom language to specific Google STT language codes
+    language_map = {
+        "Hindi": "hi-IN",
+        "Bengali": "bn-IN",
+        "English": "en-IN"
+    }
+    primary_lang = language_map.get(language, "en-US")
+    alternative_langs = [l for l in ["en-US", "en-IN", "hi-IN", "bn-IN"] if l != primary_lang]
+        
     config = speech.RecognitionConfig(
         encoding=encoding,
         sample_rate_hertz=sample_rate_hertz,
-        language_code="en-IN",
-        alternative_language_codes=["hi-IN", "bn-IN"],
+        language_code=primary_lang,
+        alternative_language_codes=alternative_langs,
         enable_automatic_punctuation=True,
     )
     response = client.recognize(config=config, audio=audio)
@@ -480,7 +489,7 @@ def transcribe_google(audio_content: bytes, mime_type: str = "audio/webm") -> st
     return transcript
 
 
-async def transcribe_deepgram(audio_content: bytes) -> str:
+async def transcribe_deepgram(audio_content: bytes, language: Optional[str] = None) -> str:
     import httpx
     api_key = os.environ.get("DEEPGRAM_API_KEY")
     if not api_key:
@@ -491,9 +500,17 @@ async def transcribe_deepgram(audio_content: bytes) -> str:
     }
     params = {
         "model": "nova-2",
-        "smart_format": "true",
-        "detect_language": "true"
+        "smart_format": "true"
     }
+    
+    # Configure language parameter for Deepgram nova-2
+    if language == "Hindi":
+        params["language"] = "hi"
+    elif language == "Bengali":
+        params["language"] = "bn"
+    else:
+        params["detect_language"] = "true"
+        
     async with httpx.AsyncClient() as client:
         response = await client.post(
             "https://api.deepgram.com/v1/listen",
@@ -509,7 +526,7 @@ async def transcribe_deepgram(audio_content: bytes) -> str:
             raise Exception(f"Deepgram STT failed: {response.text}")
 
 
-async def transcribe_assemblyai(audio_content: bytes) -> str:
+async def transcribe_assemblyai(audio_content: bytes, language: Optional[str] = None) -> str:
     import httpx
     import asyncio
     api_key = os.environ.get("ASSEMBLYAI_API_KEY")
@@ -534,13 +551,22 @@ async def transcribe_assemblyai(audio_content: bytes) -> str:
             raise Exception(f"AssemblyAI upload failed: {upload_resp.text}")
         audio_url = upload_resp.json()["upload_url"]
         
+        json_payload = {
+            "audio_url": audio_url,
+        }
+        
+        # Configure language parameter for AssemblyAI
+        if language == "Hindi":
+            json_payload["language_code"] = "hi"
+        elif language == "Bengali":
+            json_payload["language_code"] = "bn"
+        else:
+            json_payload["language_detection"] = True
+            
         transcribe_resp = await client.post(
             "https://api.assemblyai.com/v2/transcript",
             headers=headers,
-            json={
-                "audio_url": audio_url,
-                "language_detection": True
-            }
+            json=json_payload
         )
         if transcribe_resp.status_code != 200:
             raise Exception(f"AssemblyAI transcription trigger failed: {transcribe_resp.text}")
@@ -566,6 +592,7 @@ from fastapi import Header
 @app.post("/api/transcribe")
 async def transcribe_speech(
     file: UploadFile = File(...),
+    language: Optional[str] = None,
     x_audio_mime_type: Optional[str] = Header(None)
 ):
     """
@@ -579,16 +606,24 @@ async def transcribe_speech(
     
     errors = []
     mime_type = x_audio_mime_type or file.content_type or "audio/webm"
-    print(f"[STT] Dynamic audio mime-type: {mime_type}")
+    print(f"[STT] Dynamic audio mime-type: {mime_type} | Target Language: {language}")
     
     # 0. Gemini Speech-to-Text (Primary) — using new google.genai SDK
     if os.environ.get("GEMINI_API_KEY"):
         try:
-            print("[STT] Attempting Gemini Speech-to-Text (google.genai SDK)...")
+            print(f"[STT] Attempting Gemini Speech-to-Text for language: {language}...")
             from google import genai as google_genai
             import base64
             stt_client = google_genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
             audio_b64 = base64.standard_b64encode(audio_content).decode("utf-8")
+            
+            # Construct a language-specific transcription instruction to avoid translations
+            prompt_text = "Transcribe this audio. Output only the exact transcribed text, with no extra annotations, prefixes, or commentary. If the audio is empty or contains only noise/silence, output an empty string."
+            if language == "Hindi":
+                prompt_text = "Transcribe this audio. The speaker is a teacher speaking in Hindi (or a mix of Hindi and English). Output the exact transcribed text in Devanagari script. Do NOT translate to English. Output only the exact transcribed text, with no explanations, prefixes, or commentary."
+            elif language == "Bengali":
+                prompt_text = "Transcribe this audio. The speaker is a teacher speaking in Bengali (or a mix of Bengali and English). Output the exact transcribed text in Bengali script. Do NOT translate to English. Output only the exact transcribed text, with no explanations, prefixes, or commentary."
+                
             response = stt_client.models.generate_content(
                 model="gemini-2.0-flash",
                 contents=[
@@ -601,7 +636,7 @@ async def transcribe_speech(
                                 }
                             },
                             {
-                                "text": "Transcribe this audio. Output only the exact transcribed text, with no extra annotations, prefixes, or commentary. If the audio is empty or contains only noise/silence, output an empty string."
+                                "text": prompt_text
                             }
                         ]
                     }
@@ -623,7 +658,7 @@ async def transcribe_speech(
             import concurrent.futures
             loop = asyncio.get_running_loop()
             with concurrent.futures.ThreadPoolExecutor() as pool:
-                result = await loop.run_in_executor(pool, transcribe_google, audio_content, mime_type)
+                result = await loop.run_in_executor(pool, transcribe_google, audio_content, mime_type, language)
                 if result:
                     print(f"[STT] Google Cloud STT Success: '{result}'")
                     return {"text": result, "provider": "google"}
@@ -636,7 +671,7 @@ async def transcribe_speech(
     if os.environ.get("DEEPGRAM_API_KEY"):
         try:
             print("[STT] Attempting Deepgram Nova-2...")
-            result = await transcribe_deepgram(audio_content)
+            result = await transcribe_deepgram(audio_content, language)
             if result:
                 print(f"[STT] Deepgram Success: '{result}'")
                 return {"text": result, "provider": "deepgram"}
@@ -649,7 +684,7 @@ async def transcribe_speech(
     if os.environ.get("ASSEMBLYAI_API_KEY"):
         try:
             print("[STT] Attempting AssemblyAI...")
-            result = await transcribe_assemblyai(audio_content)
+            result = await transcribe_assemblyai(audio_content, language)
             if result:
                 print(f"[STT] AssemblyAI Success: '{result}'")
                 return {"text": result, "provider": "assemblyai"}
