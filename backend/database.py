@@ -5,7 +5,9 @@ from sqlalchemy.orm import sessionmaker
 
 # Path to the database file (load from environment variable for hosting, or fallback to local SQLite)
 DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL or not DATABASE_URL.strip():
+if DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.strip().strip("'\"")
+if not DATABASE_URL:
     DATABASE_URL = "sqlite:///./classroom.db"
 
 # Adjust connection settings based on the database driver
