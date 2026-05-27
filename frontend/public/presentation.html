@@ -763,11 +763,11 @@
       
       .rubric-circle {
         grid-column: 1 !important;
-        grid-row: 1 / span 2 !important;
-        width: 48px !important;
-        height: 48px !important;
+        grid-row: 1 !important; /* Fixed: avoid row span to prevent WebKit row-height collapse bugs */
+        width: 44px !important;
+        height: 44px !important;
         margin: 0 !important;
-        font-size: 1.05rem !important;
+        font-size: 0.95rem !important;
         border-width: 2px !important;
         flex-shrink: 0 !important;
       }
