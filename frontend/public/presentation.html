@@ -752,38 +752,42 @@
       .rubric-card {
         padding: 0.85rem !important;
         border-radius: 16px !important;
-        display: grid !important;
-        grid-template-columns: auto 1fr !important;
-        grid-template-rows: auto auto !important;
-        gap: 0.2rem 1rem !important;
+        display: flex !important;
+        flex-direction: row !important;
         align-items: center !important;
         text-align: left !important;
+        gap: 1rem !important;
         min-height: unset !important;
       }
       
       .rubric-circle {
-        grid-column: 1 !important;
-        grid-row: 1 !important; /* Fixed: avoid row span to prevent WebKit row-height collapse bugs */
         width: 44px !important;
         height: 44px !important;
         margin: 0 !important;
         font-size: 0.95rem !important;
         border-width: 2px !important;
         flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      
+      .rubric-text {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.2rem !important;
+        flex: 1 !important;
       }
       
       .rubric-title {
-        grid-column: 2 !important;
-        grid-row: 1 !important;
         font-size: 0.95rem !important;
         font-weight: 700 !important;
+        color: var(--text-primary) !important;
         margin: 0 !important;
         line-height: 1.2 !important;
       }
       
       .rubric-desc {
-        grid-column: 2 !important;
-        grid-row: 2 !important;
         font-size: 0.72rem !important;
         line-height: 1.35 !important;
         color: var(--text-secondary) !important;
@@ -1143,36 +1147,44 @@
           <!-- Rubric 1 -->
           <div class="rubric-card">
             <div class="rubric-circle">90</div>
-            <div class="rubric-title">Clarity & Communication</div>
-            <div class="rubric-desc">
-              Measures concept explanation quality, vocabulary choice, and grade-appropriate scaffolding.
+            <div class="rubric-text">
+              <div class="rubric-title">Clarity & Communication</div>
+              <div class="rubric-desc">
+                Measures concept explanation quality, vocabulary choice, and grade-appropriate scaffolding.
+              </div>
             </div>
           </div>
           
           <!-- Rubric 2 -->
           <div class="rubric-card">
             <div class="rubric-circle">85</div>
-            <div class="rubric-title">Student Engagement</div>
-            <div class="rubric-desc">
-              Scores how effectively the teacher managed distracted students and included quiet students.
+            <div class="rubric-text">
+              <div class="rubric-title">Student Engagement</div>
+              <div class="rubric-desc">
+                Scores how effectively the teacher managed distracted students and included quiet students.
+              </div>
             </div>
           </div>
           
           <!-- Rubric 3 -->
           <div class="rubric-card">
             <div class="rubric-circle">78</div>
-            <div class="rubric-title">Time Management</div>
-            <div class="rubric-desc">
-              Evaluates pace, lesson milestone alignment, and active time management.
+            <div class="rubric-text">
+              <div class="rubric-title">Time Management</div>
+              <div class="rubric-desc">
+                Evaluates pace, lesson milestone alignment, and active time management.
+              </div>
             </div>
           </div>
           
           <!-- Rubric 4 -->
           <div class="rubric-card">
             <div class="rubric-circle">92</div>
-            <div class="rubric-title">Question Handling</div>
-            <div class="rubric-desc">
-              Scores pedagogical response quality to student interruptions, confusion, and challenging questions.
+            <div class="rubric-text">
+              <div class="rubric-title">Question Handling</div>
+              <div class="rubric-desc">
+                Scores pedagogical response quality to student interruptions, confusion, and challenging questions.
+              </div>
             </div>
           </div>
           
