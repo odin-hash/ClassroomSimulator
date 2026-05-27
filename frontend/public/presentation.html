@@ -588,9 +588,234 @@
       50% { box-shadow: 0 0 20px 4px rgba(99, 102, 241, 0.25); border-color: rgba(99,102,241,0.7); }
     }
 
-    @keyframes nodePulseCyan {
-      0%, 100% { box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-      50% { box-shadow: 0 0 20px 4px rgba(6, 182, 212, 0.25); border-color: rgba(6,182,212,0.7); }
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 0.5rem;
+      }
+      
+      .deck-container {
+        width: 100vw;
+        height: 88vh;
+      }
+      
+      .slide {
+        padding: 1.25rem;
+        border-radius: 16px;
+      }
+      
+      .slide-title {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.25rem;
+      }
+      
+      .slide-subtitle {
+        font-size: 0.82rem !important;
+        line-height: 1.4;
+      }
+      
+      .slide-content {
+        margin: 0.5rem 0;
+        overflow-y: auto;
+        max-height: calc(100% - 75px);
+        padding-right: 0.25rem;
+      }
+      
+      /* Scrollbar styling for mobile slide content */
+      .slide-content::-webkit-scrollbar {
+        width: 3px;
+      }
+      .slide-content::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.1);
+        border-radius: 9999px;
+      }
+      
+      .grid-2x2, .grid-3x2, .layout-split, .scorecard-panel {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+      }
+      
+      .welcome-title {
+        font-size: 2.1rem !important;
+      }
+      
+      .welcome-logo {
+        width: 55px;
+        height: 55px;
+        margin-bottom: 1rem;
+      }
+      
+      .welcome-badge {
+        font-size: 0.75rem !important;
+        padding: 0.35rem 1rem !important;
+        margin-bottom: 1rem;
+      }
+      
+      .card-glass {
+        padding: 1rem !important;
+      }
+      
+      .card-title {
+        font-size: 1rem !important;
+        margin-bottom: 0.4rem;
+      }
+      
+      .card-text {
+        font-size: 0.78rem !important;
+        line-height: 1.45;
+      }
+      
+      .highlight-box {
+        padding: 0.85rem !important;
+        margin-top: 0.5rem !important;
+      }
+      
+      /* Interactive Personas Mobile Adjustments */
+      .persona-grid-interactive {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 0.5rem !important;
+      }
+      
+      .persona-tab {
+        padding: 0.5rem !important;
+        gap: 0.4rem !important;
+        border-radius: 12px !important;
+      }
+      
+      .persona-avatar {
+        width: 32px !important;
+        height: 32px !important;
+      }
+      
+      .persona-tab p {
+        font-size: 0.78rem !important;
+      }
+      
+      .persona-tab p:last-child {
+        display: none !important; /* Hide role on mobile tabs */
+      }
+      
+      .persona-details-panel {
+        grid-column: 1 / span 3 !important;
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        padding: 0.85rem !important;
+        align-items: flex-start !important;
+      }
+      
+      #persona-detail-icon {
+        display: none !important; /* Hide large icon to save vertical space */
+      }
+      
+      /* Technical Pipeline Mobile Adjustments */
+      .pipeline-diagram {
+        flex-direction: column !important;
+        gap: 1.25rem !important;
+        align-items: center !important;
+        padding: 1.5rem 0 !important;
+      }
+      
+      .pipeline-diagram::before {
+        width: 2px !important;
+        height: 80% !important;
+        left: 50% !important;
+        top: 10% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+      }
+      
+      .pipeline-node {
+        width: 85% !important;
+        max-width: 320px !important;
+        padding: 0.75rem !important;
+      }
+      
+      .pipeline-node-icon {
+        font-size: 1.1rem !important;
+        margin-bottom: 0.25rem !important;
+      }
+      
+      .pipeline-node-title {
+        font-size: 0.78rem !important;
+      }
+      
+      .pipeline-node-desc {
+        font-size: 0.65rem !important;
+      }
+      
+      /* Rubrics Scorecard Mobile Adjustments */
+      .rubric-card {
+        padding: 0.85rem !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        text-align: left !important;
+        gap: 1rem !important;
+      }
+      
+      .rubric-circle {
+        width: 44px !important;
+        height: 44px !important;
+        margin: 0 !important;
+        font-size: 0.95rem !important;
+        border-width: 2px !important;
+      }
+      
+      .rubric-title {
+        font-size: 0.85rem !important;
+        margin-bottom: 0.15rem !important;
+      }
+      
+      .rubric-desc {
+        font-size: 0.68rem !important;
+        line-height: 1.35;
+      }
+      
+      /* Demo Step Mobile Adjustments */
+      .demo-step-row {
+        gap: 0.75rem !important;
+        padding: 0.75rem !important;
+        margin-bottom: 0.5rem !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+      }
+      
+      .demo-time {
+        font-size: 0.78rem !important;
+        padding: 0.15rem 0.4rem !important;
+      }
+      
+      .demo-step-text {
+        font-size: 0.78rem !important;
+        line-height: 1.4;
+      }
+      
+      /* Controls Panel Mobile Adjustments */
+      .controls-panel {
+        width: 100vw;
+        padding: 0 1rem;
+        margin-top: 0.75rem;
+      }
+      
+      .progress-bar-container {
+        display: none !important; /* Hide progress bar on mobile to fit buttons */
+      }
+      
+      .btn-text {
+        padding: 0.4rem 0.85rem !important;
+        font-size: 0.78rem !important;
+        border-radius: 6px !important;
+      }
+      
+      .btn-control {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      
+      #slide-indicator {
+        font-size: 0.78rem !important;
+        width: 38px !important;
+      }
     }
 
     /* PDF Print Styles (Cmd+P layout override) */
@@ -1029,8 +1254,8 @@
       });
       
       const percentage = (currentSlide / (totalSlides - 1)) * 100;
-      progressBar.style.width = `${percentage}%`;
-      slideIndicator.textContent = `${currentSlide + 1} / ${totalSlides}`;
+      if (progressBar) progressBar.style.width = `${percentage}%`;
+      if (slideIndicator) slideIndicator.textContent = `${currentSlide + 1} / ${totalSlides}`;
     }
 
     // Navigation
@@ -1056,6 +1281,33 @@
         }
       }
     });
+
+    // Touch Swipe Gesture Support for Mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    window.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    window.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipeGesture();
+    }, { passive: true });
+    
+    function handleSwipeGesture() {
+      const swipeDistance = touchEndX - touchStartX;
+      const swipeThreshold = 50; // Minimum distance in pixels to trigger a swipe
+      if (Math.abs(swipeDistance) > swipeThreshold) {
+        if (swipeDistance < 0) {
+          // Swiped left -> Next slide
+          navigate(1);
+        } else {
+          // Swiped right -> Previous slide
+          navigate(-1);
+        }
+      }
+    }
 
     // Tap to advance
     slides.forEach((slide) => {
@@ -1102,7 +1354,6 @@
       document.getElementById('p-name').textContent = data.name;
       document.getElementById('p-role').textContent = data.role;
       document.getElementById('p-desc').textContent = data.desc;
-      document.getElementById('persona-detail-icon').textContent = data.icon;
       
       const statsContainer = document.getElementById('p-stats');
       statsContainer.innerHTML = '';
