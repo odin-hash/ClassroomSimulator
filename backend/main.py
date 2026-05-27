@@ -668,7 +668,6 @@ async def get_config():
     Returns configuration status, such as whether speech-to-text API keys are configured.
     """
     has_keys = bool(
-        os.environ.get("GEMINI_API_KEY") or
         os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or
         os.environ.get("GOOGLE_API_KEY") or
         os.environ.get("DEEPGRAM_API_KEY") or
