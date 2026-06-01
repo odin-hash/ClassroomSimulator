@@ -80,6 +80,12 @@ def read_root():
     return {"message": "Welcome to Future Classroom Simulator API"}
 
 
+@app.get("/api/ping")
+def ping():
+    """Ultra-lightweight health check endpoint for keep-awake cron jobs"""
+    return {"status": "ok"}
+
+
 @app.get("/api/students")
 def get_students():
     """Returns details of virtual students"""
